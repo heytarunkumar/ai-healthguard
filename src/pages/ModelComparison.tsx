@@ -39,7 +39,6 @@ import {
 } from "lucide-react";
 import { getModelMetrics, ModelMetric } from "@/lib/api";
 import { modelComparison as defaultModels } from "@/lib/mockData";
-import { motion } from "framer-motion";
 import { TrustSafetyBanner } from "@/components/TrustSafetyBanner";
 
 const formatPercent = (val: number | string | undefined): string => {
@@ -47,15 +46,18 @@ const formatPercent = (val: number | string | undefined): string => {
   if (typeof val === "string") {
     return val.includes("%") ? val : `${parseFloat(val).toFixed(1)}%`;
   }
-  if (val <= 1 && val > 0) {
-    return `${(val * 100).toFixed(1)}%`;
+  if (typeof val === "number") {
+    if (val <= 1 && val > 0) {
+      return `${(val * 100).toFixed(1)}%`;
+    }
+    return `${val.toFixed(1)}%`;
   }
-  return `${val.toFixed(1)}%`;
+  return String(val);
 };
 
 const formatDecimal = (val: number | string | undefined): string => {
   if (val === undefined || val === null) return "-";
-  const num = typeof val === "number" ? val : parseFloat(val);
+  const num = typeof val === "number" ? val : parseFloat(String(val));
   if (isNaN(num)) return String(val);
   if (num > 1) return (num / 100).toFixed(2);
   return num.toFixed(2);
@@ -75,14 +77,13 @@ export default function ModelComparison() {
       try {
         return await getModelMetrics();
       } catch (err) {
-        console.warn("Could not fetch dynamic metrics from API, displaying report benchmarks:", err);
         return null;
       }
     },
     staleTime: 60000,
   });
 
-  const modelsList = defaultModels;
+  const modelsList = defaultModels || [];
 
   // Model Cards Data for Concept 7: Model Transparency Center
   const modelCards = [
@@ -202,16 +203,19 @@ export default function ModelComparison() {
           return v <= 1 ? Number((v * 100).toFixed(1)) : Number(v.toFixed(1));
         }
         if (typeof v === "string") {
-          return parseFloat(v.replace("%", ""));
+          return parseFloat(v.replace("%", "")) || 0;
         }
         return 0;
       };
 
+      const rawAuc = typeof m.auc === "number" ? m.auc : parseFloat(String(m.auc)) || 0;
+      const aucVal = rawAuc <= 1 ? rawAuc * 100 : rawAuc;
+
       return {
-        name: m.model.replace(" ★", "").split(" ")[0],
-        fullName: m.model,
+        name: (m.model || "").replace(" ★", "").split(" ")[0] || "Model",
+        fullName: m.model || "",
         Accuracy: parseNum(m.accuracy),
-        AUC: Number((m.auc * (m.auc <= 1 ? 100 : 1)).toFixed(1)),
+        AUC: Number(aucVal.toFixed(1)),
         F1: parseNum(m.f1),
         Precision: parseNum(m.precision),
         Recall: parseNum(m.recall),
@@ -443,16 +447,16 @@ export default function ModelComparison() {
                 </div>
               </div>
 
-              <div className="h-[290px] w-full pt-2">
-                <ResponsiveContainer width="100%" height="100%">
+              <div className="h-[290px] w-full pt-2 min-h-[290px]">
+                <ResponsiveContainer width="100%" height={280} minWidth={0}>
                   <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" opacity={0.15} vertical={false} />
-                    <XAxis dataKey="name" tick={{ fontSize: 11, fontWeight: 600 }} stroke="hsl(var(--muted-foreground))" />
-                    <YAxis domain={[70, 100]} tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
+                    <XAxis dataKey="name" tick={{ fontSize: 11, fontWeight: 600 }} stroke="currentColor" />
+                    <YAxis domain={[70, 100]} tick={{ fontSize: 11 }} stroke="currentColor" />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: "hsl(var(--card))",
-                        borderColor: "hsl(var(--border))",
+                        backgroundColor: "var(--card, #fff)",
+                        borderColor: "var(--border, #ccc)",
                         borderRadius: "1rem",
                         boxShadow: "0 10px 25px -5px rgba(0,0,0,0.1)",
                         fontSize: "12px",
@@ -483,20 +487,20 @@ export default function ModelComparison() {
                 <p className="text-xs text-muted-foreground">XGBoost (Primary ★) vs. Random Forest & NN.</p>
               </div>
 
-              <div className="h-[290px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
+              <div className="h-[290px] w-full min-h-[290px]">
+                <ResponsiveContainer width="100%" height={280} minWidth={0}>
                   <RadarChart data={radarData}>
-                    <PolarGrid stroke="hsl(var(--border))" />
-                    <PolarAngleAxis dataKey="metric" tick={{ fontSize: 10, fontWeight: 700, fill: "hsl(var(--foreground))" }} />
-                    <PolarRadiusAxis domain={[75, 100]} stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 9 }} />
+                    <PolarGrid stroke="currentColor" opacity={0.2} />
+                    <PolarAngleAxis dataKey="metric" tick={{ fontSize: 10, fontWeight: 700 }} stroke="currentColor" />
+                    <PolarRadiusAxis domain={[75, 100]} stroke="currentColor" opacity={0.5} tick={{ fontSize: 9 }} />
                     <Radar name="XGBoost (Star)" dataKey="XGB" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.4} />
                     <Radar name="Random Forest" dataKey="RF" stroke="#10b981" fill="#10b981" fillOpacity={0.25} />
                     <Radar name="Neural Net" dataKey="NN" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.2} />
                     <Legend wrapperStyle={{ fontSize: "11px" }} />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: "hsl(var(--card))",
-                        borderColor: "hsl(var(--border))",
+                        backgroundColor: "var(--card, #fff)",
+                        borderColor: "var(--border, #ccc)",
                         borderRadius: "0.75rem",
                         fontSize: "11px",
                       }}

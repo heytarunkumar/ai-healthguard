@@ -10,6 +10,7 @@ import { Suspense, lazy } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Heart, Activity } from "lucide-react";
 import logo from "@/assets/logo.png";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 // Lazy-loaded pages for Code Splitting (Performance)
 const Index = lazy(() => import("./pages/Index"));
@@ -55,19 +56,21 @@ const PageWrapper = ({ children }: { children: React.ReactNode }) => (
 const AnimatedRoutes = () => {
   const location = useLocation();
   return (
-    <AnimatePresence mode="wait">
-      <Suspense fallback={<PageLoader />}>
-        <Routes location={location} key={location.pathname}>
-          <Route path="/" element={<PageWrapper><Index /></PageWrapper>} />
-          <Route path="/assess" element={<PageWrapper><RiskAssessment /></PageWrapper>} />
-          <Route path="/results" element={<PageWrapper><Results /></PageWrapper>} />
-          <Route path="/models" element={<PageWrapper><ModelComparison /></PageWrapper>} />
-          <Route path="/documentation" element={<PageWrapper><Documentation /></PageWrapper>} />
-          <Route path="/about" element={<PageWrapper><About /></PageWrapper>} />
-          <Route path="*" element={<PageWrapper><NotFound /></PageWrapper>} />
-        </Routes>
-      </Suspense>
-    </AnimatePresence>
+    <ErrorBoundary>
+      <AnimatePresence mode="wait">
+        <Suspense fallback={<PageLoader />}>
+          <Routes location={location} key={location.pathname}>
+            <Route path="/" element={<PageWrapper><Index /></PageWrapper>} />
+            <Route path="/assess" element={<PageWrapper><RiskAssessment /></PageWrapper>} />
+            <Route path="/results" element={<PageWrapper><Results /></PageWrapper>} />
+            <Route path="/models" element={<PageWrapper><ModelComparison /></PageWrapper>} />
+            <Route path="/documentation" element={<PageWrapper><Documentation /></PageWrapper>} />
+            <Route path="/about" element={<PageWrapper><About /></PageWrapper>} />
+            <Route path="*" element={<PageWrapper><NotFound /></PageWrapper>} />
+          </Routes>
+        </Suspense>
+      </AnimatePresence>
+    </ErrorBoundary>
   );
 };
 
