@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSEO } from "@/hooks/useSEO";
 import {
@@ -41,6 +41,25 @@ import { getModelMetrics, ModelMetric } from "@/lib/api";
 import { modelComparison as defaultModels } from "@/lib/mockData";
 import { motion } from "framer-motion";
 import { TrustSafetyBanner } from "@/components/TrustSafetyBanner";
+
+const formatPercent = (val: number | string | undefined): string => {
+  if (val === undefined || val === null) return "-";
+  if (typeof val === "string") {
+    return val.includes("%") ? val : `${parseFloat(val).toFixed(1)}%`;
+  }
+  if (val <= 1 && val > 0) {
+    return `${(val * 100).toFixed(1)}%`;
+  }
+  return `${val.toFixed(1)}%`;
+};
+
+const formatDecimal = (val: number | string | undefined): string => {
+  if (val === undefined || val === null) return "-";
+  const num = typeof val === "number" ? val : parseFloat(val);
+  if (isNaN(num)) return String(val);
+  if (num > 1) return (num / 100).toFixed(2);
+  return num.toFixed(2);
+};
 
 export default function ModelComparison() {
   useSEO({
@@ -176,15 +195,29 @@ export default function ModelComparison() {
     { rank: 8, feature: "Exercise Angina (exang)", score: 0.14, role: "Exertional Symptom", color: "#14b8a6" },
   ];
 
-  const chartData = modelsList.map((m) => ({
-    name: m.model.replace(" ★", "").split(" ")[0],
-    fullName: m.model,
-    Accuracy: Number(m.accuracy.replace("%", "")),
-    AUC: Number((m.auc * 100).toFixed(1)),
-    F1: Number((m.f1 * 100).toFixed(1)),
-    Precision: Number((m.precision * 100).toFixed(1)),
-    Recall: Number((m.recall * 100).toFixed(1)),
-  }));
+  const chartData = useMemo(() => {
+    return modelsList.map((m) => {
+      const parseNum = (v: any) => {
+        if (typeof v === "number") {
+          return v <= 1 ? Number((v * 100).toFixed(1)) : Number(v.toFixed(1));
+        }
+        if (typeof v === "string") {
+          return parseFloat(v.replace("%", ""));
+        }
+        return 0;
+      };
+
+      return {
+        name: m.model.replace(" ★", "").split(" ")[0],
+        fullName: m.model,
+        Accuracy: parseNum(m.accuracy),
+        AUC: Number((m.auc * (m.auc <= 1 ? 100 : 1)).toFixed(1)),
+        F1: parseNum(m.f1),
+        Precision: parseNum(m.precision),
+        Recall: parseNum(m.recall),
+      };
+    });
+  }, [modelsList]);
 
   const radarData = [
     { metric: "Accuracy", XGB: 91.4, RF: 89.5, NN: 88.6, SVM: 87.8, LR: 82.9 },
@@ -546,15 +579,58 @@ export default function ModelComparison() {
                       <span>{m.model}</span>
                     </td>
                     <td className="py-3.5 px-4 text-muted-foreground">{m.type}</td>
-                    <td className="py-3.5 px-4 text-center font-semibold text-primary">{m.accuracy}</td>
-                    <td className="py-3.5 px-4 text-center font-mono">{m.precision}</td>
-                    <td className="py-3.5 px-4 text-center font-mono">{m.recall}</td>
-                    <td className="py-3.5 px-4 text-center font-mono">{m.f1}</td>
-                    <td className="py-3.5 px-4 text-center font-mono text-emerald-600 dark:text-emerald-400 font-bold">{m.auc}</td>
+                    <td className="py-3.5 px-4 text-center font-semibold text-primary">{formatPercent(m.accuracy)}</td>
+                    <td className="py-3.5 px-4 text-center font-mono">{formatPercent(m.precision)}</td>
+                    <td className="py-3.5 px-4 text-center font-mono">{formatPercent(m.recall)}</td>
+                    <td className="py-3.5 px-4 text-center font-mono">{formatPercent(m.f1)}</td>
+                    <td className="py-3.5 px-4 text-center font-mono text-emerald-600 dark:text-emerald-400 font-bold">{formatDecimal(m.auc)}</td>
                     <td className="py-3.5 px-4 text-right">
                       <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
                         <CheckCircle2 className="h-3.5 w-3.5" /> Exceeded
                       </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Table 11: Cross-Validation Stability Analysis (5-Fold vs. 10-Fold) */}
+        <div className="card-elevated p-6 sm:p-8 space-y-4">
+          <div className="border-b border-border pb-4">
+            <h2 className="font-heading text-lg font-bold text-foreground flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-emerald-500" /> Table 11: Cross-Validation Stability (5-Fold vs. 10-Fold)
+            </h2>
+            <p className="text-xs text-muted-foreground">Evaluating cross-validation stability and generalizability across splits.</p>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="border-b border-border bg-muted/30">
+                  <th className="py-3 px-4 font-bold text-foreground">Model Architecture</th>
+                  <th className="py-3 px-4 font-bold text-foreground text-center">5-Fold CV Accuracy</th>
+                  <th className="py-3 px-4 font-bold text-foreground text-center">10-Fold CV Accuracy</th>
+                  <th className="py-3 px-4 font-bold text-foreground">Stability Assessment</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/60">
+                {modelsList.map((m) => (
+                  <tr key={m.model} className="hover:bg-muted/25 transition-colors">
+                    <td className="py-3.5 px-4 font-bold text-foreground">{m.model}</td>
+                    <td className="py-3.5 px-4 text-center font-semibold text-primary">{m.cv5}</td>
+                    <td className="py-3.5 px-4 text-center font-semibold text-foreground">{m.cv10}</td>
+                    <td className="py-3.5 px-4 text-muted-foreground">
+                      {m.model.includes("XGBoost")
+                        ? "Excellent generalization, lowest variance (Star Model)"
+                        : m.model.includes("Random Forest")
+                        ? "Well-generalized, consistent performance"
+                        : m.model.includes("Neural")
+                        ? "Acceptable, slightly higher variance on small datasets"
+                        : m.model.includes("SVM")
+                        ? "Consistent across both schemes"
+                        : "Stable baseline, low variance"}
                     </td>
                   </tr>
                 ))}
