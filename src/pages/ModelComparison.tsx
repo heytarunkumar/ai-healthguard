@@ -3,6 +3,7 @@ import { useSEO } from "@/hooks/useSEO";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Cell, Legend } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { Trophy, Cpu, Activity, BarChart3, Binary, ShieldCheck, CheckCircle2, Award, BookOpen, Layers } from "lucide-react";
+import { getModelMetrics, ModelMetric } from "@/lib/api";
 import { modelComparison as defaultModels } from "@/lib/mockData";
 import { motion } from "framer-motion";
 
@@ -12,12 +13,15 @@ export default function ModelComparison() {
     description: "Empirical benchmark evaluation of the 5 machine learning models (XGBoost, Random Forest, SVM, Neural Network, Logistic Regression) tested across 5-fold and 10-fold cross-validation.",
   });
 
-  const { data: metrics } = useQuery({
+  const { data: metrics } = useQuery<ModelMetric[]>({
     queryKey: ["metrics"],
     queryFn: async () => {
-      const res = await fetch("/api/metrics");
-      if (!res.ok) return null;
-      return res.json();
+      try {
+        return await getModelMetrics();
+      } catch (err) {
+        console.warn("Could not fetch dynamic metrics from API, displaying report benchmarks:", err);
+        return null;
+      }
     },
     staleTime: 60000,
   });

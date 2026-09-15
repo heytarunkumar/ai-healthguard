@@ -24,14 +24,16 @@ import {
   ChevronRight,
   Info,
   Building2,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RiskGauge } from "@/components/RiskGauge";
-import { featureFields, mockShapValues, recommendations as defaultRecommendations, modelComparison } from "@/lib/mockData";
+import { featureFields, recommendations as defaultRecommendations, modelComparison } from "@/lib/mockData";
 import { useSEO } from "@/hooks/useSEO";
 import { useToast } from "@/hooks/use-toast";
+import { predictRisk, PredictionResponse } from "@/lib/api";
 import jsPDF from "jspdf";
 
 export default function Results() {
@@ -41,72 +43,62 @@ export default function Results() {
   const patientData = location.state?.patientData as Record<string, string> | undefined;
 
   useSEO({
-    title: "Diagnostic Analysis Results | AI-HealthGuard",
-    description: "Deep-dive diagnostic analysis with SHAP explainability, 5-model consensus, and 4-tier personalized cardiovascular prevention planning.",
+    title: "IHD Risk Assessment Results | AI-HealthGuard",
+    description: "Machine-learning risk assessment with SHAP explainability, 5-model consensus, and 4-tier personalized cardiovascular prevention planning.",
   });
 
   const [activeTab, setActiveTab] = useState("risk");
   const sessionId = useMemo(() => `AI-${Math.random().toString(36).substring(2, 8).toUpperCase()}`, []);
 
-  // API Query for Real Inference & SHAP
-  const { data: apiData, isLoading, error } = useQuery({
+  // API Query for Real Inference & SHAP using src/lib/api.ts abstraction
+  const {
+    data: apiData,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery<PredictionResponse, Error>({
     queryKey: ["predict", patientData],
     queryFn: async () => {
-      if (!patientData) return null;
-      const numericData = Object.keys(patientData).reduce((acc, key) => {
-        acc[key] = parseFloat(patientData[key]) || 0;
-        return acc;
-      }, {} as Record<string, number>);
-
-      const res = await fetch("/api/predict", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(numericData),
-      });
-      if (!res.ok) throw new Error("API prediction request failed");
-      return res.json();
+      if (!patientData) throw new Error("No patient clinical parameters provided.");
+      return await predictRisk(patientData);
     },
     enabled: !!patientData,
+    retry: 1,
   });
 
-  // Calculate scores with fallback
   const riskScore: number = useMemo(() => {
-    if (apiData?.risk_score !== undefined) return apiData.risk_score;
-    if (!patientData) return 82;
-    // Heuristic fallback
-    const age = parseFloat(patientData.age) || 50;
-    const cp = parseFloat(patientData.cp) || 0;
-    const oldpeak = parseFloat(patientData.oldpeak) || 0;
-    const ca = parseFloat(patientData.ca) || 0;
-    const thal = parseFloat(patientData.thal) || 1;
-    let score = Math.min(99, Math.max(12, Math.round((age * 0.4) + (cp * 12) + (oldpeak * 10) + (ca * 8) + (thal * 5))));
-    return score;
-  }, [apiData, patientData]);
+    return apiData?.risk_score ?? 0;
+  }, [apiData]);
 
-  const riskLevel = useMemo(() => {
+  const riskLevel: string = useMemo(() => {
+    if (apiData?.risk_level) return apiData.risk_level;
     if (riskScore <= 39) return "LOW RISK";
     if (riskScore <= 69) return "MODERATE RISK";
     return "HIGH RISK";
-  }, [riskScore]);
+  }, [apiData, riskScore]);
 
   // SHAP Values processing
   const shapDrivers = useMemo(() => {
     if (apiData?.shap?.shap_values && apiData?.shap?.features) {
       const features = Object.keys(apiData.shap.features);
       const values: number[] = apiData.shap.shap_values;
-      return features.map((feat, idx) => {
-        const val = values[idx] || 0;
-        const fieldMeta = featureFields.find(f => f.name === feat);
-        return {
-          feature: feat,
-          label: fieldMeta ? `${fieldMeta.label} (${feat})` : feat,
-          value: apiData.shap.features[feat],
-          shap: val,
-          direction: val >= 0 ? ("risk" as const) : ("protective" as const),
-        };
-      }).sort((a, b) => Math.abs(b.shap) - Math.abs(a.shap)).slice(0, 10);
+      return features
+        .map((feat, idx) => {
+          const val = values[idx] || 0;
+          const fieldMeta = featureFields.find((f) => f.name === feat);
+          return {
+            feature: feat,
+            label: fieldMeta ? `${fieldMeta.label} (${feat})` : feat,
+            value: apiData.shap.features[feat],
+            shap: val,
+            direction: val >= 0 ? ("risk" as const) : ("protective" as const),
+          };
+        })
+        .sort((a, b) => Math.abs(b.shap) - Math.abs(a.shap))
+        .slice(0, 10);
     }
-    return mockShapValues;
+    return [];
   }, [apiData]);
 
   // 4 Categories of Recommendations
@@ -122,21 +114,51 @@ export default function Results() {
   // 5 Models Consensus
   const modelResults = useMemo(() => {
     if (apiData?.model_results) {
+      const mr = apiData.model_results;
       return [
-        { name: "XGBoost (Primary ★)", key: "xgb", prob: apiData.model_results.xgb?.probability ?? 0.82, accuracy: "91.4%", status: "Primary Model" },
-        { name: "Random Forest", key: "rf", prob: apiData.model_results.rf?.probability ?? 0.79, accuracy: "89.5%", status: "Ensemble Validator" },
-        { name: "Neural Network", key: "nn", prob: apiData.model_results.nn?.probability ?? 0.77, accuracy: "88.6%", status: "Deep Learning" },
-        { name: "SVM (RBF Kernel)", key: "svm", prob: apiData.model_results.svm?.probability ?? 0.75, accuracy: "87.8%", status: "Kernel Classifier" },
-        { name: "Logistic Regression", key: "lr", prob: apiData.model_results.lr?.probability ?? 0.71, accuracy: "82.9%", status: "Linear Baseline" },
+        {
+          name: "XGBoost (Primary ★)",
+          key: "xgb",
+          prob: mr.xgb?.probability ?? (riskScore / 100),
+          accuracy: "91.4%",
+          status: "Primary Model (Enforced)",
+          error: mr.xgb?.error,
+        },
+        {
+          name: "Random Forest",
+          key: "rf",
+          prob: mr.rf?.probability ?? null,
+          accuracy: "89.5%",
+          status: "Ensemble Validator",
+          error: mr.rf?.error,
+        },
+        {
+          name: "Neural Network",
+          key: "nn",
+          prob: mr.nn?.probability ?? null,
+          accuracy: "88.6%",
+          status: "Deep Learning",
+          error: mr.nn?.error,
+        },
+        {
+          name: "SVM (RBF Kernel)",
+          key: "svm",
+          prob: mr.svm?.probability ?? null,
+          accuracy: "87.8%",
+          status: "Kernel Classifier",
+          error: mr.svm?.error,
+        },
+        {
+          name: "Logistic Regression",
+          key: "lr",
+          prob: mr.lr?.probability ?? null,
+          accuracy: "82.9%",
+          status: "Linear Baseline",
+          error: mr.lr?.error,
+        },
       ];
     }
-    return [
-      { name: "XGBoost (Primary ★)", key: "xgb", prob: (riskScore / 100), accuracy: "91.4%", status: "Primary Model" },
-      { name: "Random Forest", key: "rf", prob: Math.max(0.1, (riskScore - 3) / 100), accuracy: "89.5%", status: "Ensemble Validator" },
-      { name: "Neural Network", key: "nn", prob: Math.max(0.1, (riskScore - 5) / 100), accuracy: "88.6%", status: "Deep Learning" },
-      { name: "SVM (RBF Kernel)", key: "svm", prob: Math.max(0.1, (riskScore - 7) / 100), accuracy: "87.8%", status: "Kernel Classifier" },
-      { name: "Logistic Regression", key: "lr", prob: Math.max(0.1, (riskScore - 10) / 100), accuracy: "82.9%", status: "Linear Baseline" },
-    ];
+    return [];
   }, [apiData, riskScore]);
 
   // PDF Export Function
@@ -153,7 +175,7 @@ export default function Results() {
       doc.setTextColor(255, 255, 255);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(16);
-      doc.text("AI-HealthGuard | Clinical Diagnostic Report", 14, 14);
+      doc.text("AI-HealthGuard | Clinical Risk Assessment Report", 14, 14);
 
       doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
@@ -183,10 +205,10 @@ export default function Results() {
       doc.setTextColor(100, 116, 139);
       doc.text(
         riskScore <= 39
-          ? "Below-average IHD risk. Maintain healthy habits and routine annual checkups."
+          ? "Below-average IHD risk (0-39). Maintain healthy habits and routine annual checkups."
           : riskScore <= 69
-          ? "Above-average risk. Targeted lifestyle changes and physician follow-up required."
-          : "URGENT: Substantially elevated risk. Comprehensive cardiologist evaluation needed.",
+          ? "Moderate IHD risk (40-69). Targeted lifestyle changes and physician follow-up advised."
+          : "Elevated IHD risk (70-100). Comprehensive cardiologist evaluation strongly recommended.",
         20,
         y + 31
       );
@@ -210,15 +232,20 @@ export default function Results() {
 
       y += 7;
       doc.setFont("helvetica", "normal");
-      shapDrivers.slice(0, 5).forEach((d) => {
-        doc.text(d.label, 18, y + 5);
-        doc.text(String(d.value ?? "-"), 85, y + 5);
-        doc.text(d.shap > 0 ? `+${d.shap.toFixed(3)}` : d.shap.toFixed(3), 130, y + 5);
-        doc.setTextColor(d.direction === "risk" ? 220 : 16, d.direction === "risk" ? 38 : 140, 38);
-        doc.text(d.direction === "risk" ? "Risk Driver" : "Protective Asset", 165, y + 5);
-        doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
+      if (shapDrivers.length > 0) {
+        shapDrivers.slice(0, 5).forEach((d) => {
+          doc.text(d.label, 18, y + 5);
+          doc.text(String(d.value ?? "-"), 85, y + 5);
+          doc.text(d.shap > 0 ? `+${d.shap.toFixed(3)}` : d.shap.toFixed(3), 130, y + 5);
+          doc.setTextColor(d.direction === "risk" ? 220 : 16, d.direction === "risk" ? 38 : 140, 38);
+          doc.text(d.direction === "risk" ? "Risk Driver" : "Protective Asset", 165, y + 5);
+          doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
+          y += 6;
+        });
+      } else {
+        doc.text("SHAP feature attributions not available for this run.", 18, y + 5);
         y += 6;
-      });
+      }
 
       // Section: 4-Tier Personalized Prevention Plan
       y += 6;
@@ -256,7 +283,7 @@ export default function Results() {
       doc.setFontSize(7);
       doc.setTextColor(148, 163, 184);
       doc.text("Disclaimer: AI-HealthGuard is an AI-powered clinical decision support research tool developed at GL Bajaj Group of Institutions.", 14, 285);
-      doc.text("Predictions and SHAP values are for educational and screening assistance; consult a licensed cardiologist for medical diagnoses.", 14, 289);
+      doc.text("Predictions and SHAP values are for risk screening assistance; consult a licensed cardiologist for medical diagnoses.", 14, 289);
 
       doc.save(`AIHealthGuard_Report_${sessionId}.pdf`);
       toast({
@@ -290,19 +317,63 @@ export default function Results() {
     );
   }
 
+  // Loading State
+  if (isLoading) {
+    return (
+      <main className="min-h-[80vh] flex flex-col items-center justify-center px-4 text-center" id="main-content">
+        <div className="relative mb-6">
+          <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center animate-ping absolute inset-0 opacity-75"></div>
+          <div className="h-20 w-20 rounded-full bg-primary/20 flex items-center justify-center relative shadow-md">
+            <Heart className="h-10 w-10 text-primary animate-pulse" />
+          </div>
+        </div>
+        <h2 className="text-2xl font-bold text-foreground">Running Inference & SHAP Analysis</h2>
+        <p className="mt-2 text-sm text-muted-foreground max-w-md">
+          Preprocessing clinical biomarkers, evaluating primary XGBoost model, and computing local game-theoretic feature attributions...
+        </p>
+        <div className="mt-6 flex items-center gap-2 text-xs font-semibold text-primary">
+          <RefreshCw className="h-4 w-4 animate-spin" /> Processing Session {sessionId}
+        </div>
+      </main>
+    );
+  }
+
+  // Error State - No Fake Data Fallback
+  if (isError || !apiData) {
+    return (
+      <main className="min-h-[80vh] flex flex-col items-center justify-center px-4 text-center" id="main-content">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-destructive/10 text-destructive shadow-sm">
+          <AlertTriangle className="h-8 w-8" />
+        </div>
+        <h2 className="text-2xl font-bold text-foreground">Inference Request Failed</h2>
+        <p className="mt-2 text-sm text-muted-foreground max-w-lg">
+          {error?.message || "The inference service could not calculate a risk score for the submitted parameters. Synthetic fallback is disabled."}
+        </p>
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+          <Button onClick={() => refetch()} variant="outline" className="rounded-xl font-semibold gap-2">
+            <RefreshCw className="h-4 w-4" /> Retry Inference
+          </Button>
+          <Button onClick={() => navigate("/assess", { state: { formData: patientData } })} className="rounded-xl font-semibold gap-2">
+            <ArrowLeft className="h-4 w-4" /> Edit Parameters
+          </Button>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-background px-4 py-10 sm:px-6 lg:px-8" id="main-content">
       <div className="mx-auto max-w-6xl space-y-8">
-        {/* Header Bar matching Fig. 4 */}
+        {/* Header Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-6">
           <div>
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               <span>Session ID: {sessionId}</span>
               <span>•</span>
-              <span className="text-primary font-bold">XGBoost Optimized (SF-2)</span>
+              <span className="text-primary font-bold">XGBoost Primary (SF-2 Top-10)</span>
             </div>
             <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
-              Diagnostic Analysis Results
+              IHD Risk Assessment Results
             </h1>
           </div>
 
@@ -326,7 +397,7 @@ export default function Results() {
           </div>
         </div>
 
-        {/* Alert Banner matching Fig. 4 */}
+        {/* Alert Banner */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -350,280 +421,213 @@ export default function Results() {
           <div>
             <h3 className="font-bold text-sm sm:text-base">
               {riskScore <= 39
-                ? "Low Risk Profile Confirmed"
+                ? "Low Risk Profile Confirmed (0–39 Band)"
                 : riskScore <= 69
-                ? "Moderate Risk Profile Detected"
-                : "Advanced Risk Profile Detected"}
+                ? "Moderate Risk Profile Detected (40–69 Band)"
+                : "High Risk Profile Detected (70–100 Band)"}
             </h3>
             <p className="mt-1 text-xs sm:text-sm leading-relaxed opacity-90">
               {riskScore <= 39
-                ? "Your machine-calculated IHD risk score is below the clinical intervention threshold. Continue regular physical activity and annual health screenings."
+                ? "Your calculated IHD risk score is within the lower clinical screening band. Maintain healthy cardiovascular habits and routine annual checkups."
                 : riskScore <= 69
-                ? "Your parameters place you in the moderate tier. System recommends lifestyle modifications, lipid evaluation, and a primary care follow-up within 1–3 months."
-                : "Your machine-calculated IHD risk score is over the critical threshold. System recommends immediate clinical validation and consultation with a cardiology specialist."}
+                ? "Your calculated IHD risk score falls in the moderate tier. Structured lifestyle modifications and primary care follow-up are advised."
+                : "Your calculated IHD risk score indicates elevated risk. Prompt formal clinical evaluation by a cardiologist is strongly recommended."}
             </p>
           </div>
         </motion.div>
 
-        {/* 5 Tabs Dashboard (Matching Figs. 4, 5, 6, 7) */}
+        {/* 5 Tabs Interface */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid grid-cols-2 sm:grid-cols-5 h-auto p-1.5 rounded-2xl bg-muted/50 border border-border">
-            <TabsTrigger value="risk" className="rounded-xl py-2.5 text-xs font-bold gap-1.5 data-[state=active]:bg-card data-[state=active]:shadow-sm">
-              <Heart className="h-3.5 w-3.5" /> Risk Overview
+          <TabsList className="grid grid-cols-2 sm:grid-cols-5 h-auto p-1.5 bg-muted/60 rounded-2xl gap-1">
+            <TabsTrigger value="risk" className="rounded-xl py-2.5 font-bold text-xs sm:text-sm">
+              <Heart className="h-4 w-4 mr-2" /> Risk Overview
             </TabsTrigger>
-            <TabsTrigger value="explain" className="rounded-xl py-2.5 text-xs font-bold gap-1.5 data-[state=active]:bg-card data-[state=active]:shadow-sm">
-              <Shield className="h-3.5 w-3.5" /> AI Insights (SHAP)
+            <TabsTrigger value="shap" className="rounded-xl py-2.5 font-bold text-xs sm:text-sm">
+              <Sparkles className="h-4 w-4 mr-2 text-primary" /> SHAP Drivers
             </TabsTrigger>
-            <TabsTrigger value="prevention" className="rounded-xl py-2.5 text-xs font-bold gap-1.5 data-[state=active]:bg-card data-[state=active]:shadow-sm">
-              <Stethoscope className="h-3.5 w-3.5" /> Prevention Plan
+            <TabsTrigger value="prevention" className="rounded-xl py-2.5 font-bold text-xs sm:text-sm">
+              <Shield className="h-4 w-4 mr-2" /> Prevention Plan
             </TabsTrigger>
-            <TabsTrigger value="details" className="rounded-xl py-2.5 text-xs font-bold gap-1.5 data-[state=active]:bg-card data-[state=active]:shadow-sm">
-              <Layers className="h-3.5 w-3.5" /> Clinical Details
+            <TabsTrigger value="models" className="rounded-xl py-2.5 font-bold text-xs sm:text-sm">
+              <Layers className="h-4 w-4 mr-2" /> 5-Model Consensus
             </TabsTrigger>
-            <TabsTrigger value="global" className="rounded-xl py-2.5 text-xs font-bold gap-1.5 data-[state=active]:bg-card data-[state=active]:shadow-sm">
-              <BarChart3 className="h-3.5 w-3.5" /> Global Insights
+            <TabsTrigger value="clinical" className="rounded-xl py-2.5 font-bold text-xs sm:text-sm col-span-2 sm:col-span-1">
+              <Activity className="h-4 w-4 mr-2" /> Clinical Details
             </TabsTrigger>
           </TabsList>
 
-          {/* TAB 1: Risk Overview (Fig. 4) */}
+          {/* TAB 1: Risk Overview */}
           <TabsContent value="risk" className="space-y-6">
-            <div className="grid gap-6 md:grid-cols-12">
-              {/* Overall Risk Score Card */}
-              <div className="md:col-span-5 rounded-3xl border border-border bg-card p-6 sm:p-8 flex flex-col items-center justify-center text-center shadow-sm">
-                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-4">
-                  Overall Risk Score
-                </span>
-                <RiskGauge score={riskScore} />
-                <p className="mt-4 text-xs text-muted-foreground max-w-xs leading-relaxed">
-                  This score represents the statistical probability of Ischemic Heart Disease presence based on your 13 clinical inputs.
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              <div className="lg:col-span-5 rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-sm flex flex-col items-center justify-center text-center">
+                <RiskGauge score={riskScore} size="lg" />
+                <div className="mt-6 flex items-center justify-center gap-2">
+                  <Badge
+                    className={`px-3 py-1 text-xs font-bold rounded-full border ${
+                      riskScore <= 39
+                        ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                        : riskScore <= 69
+                        ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                        : "bg-red-500/10 text-red-600 border-red-500/20"
+                    }`}
+                  >
+                    {riskLevel}
+                  </Badge>
+                  <span className="text-xs text-muted-foreground">Threshold: 70+</span>
+                </div>
+                <p className="mt-4 text-xs text-muted-foreground max-w-xs">
+                  XGBoost probability estimate: <strong className="text-foreground">{(apiData.probability * 100).toFixed(1)}%</strong>
                 </p>
               </div>
 
-              {/* Classification Tiers & Prediction Logic (Fig. 4) */}
-              <div className="md:col-span-7 space-y-6">
-                {/* Classification Tiers */}
-                <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
-                  <h3 className="text-sm font-bold text-foreground mb-4 flex items-center gap-2">
-                    <Layers className="h-4 w-4 text-primary" /> Classification Tiers (Table 7)
-                  </h3>
-
-                  <div className="space-y-3">
-                    {[
-                      { band: "0–39", label: "Low Risk", color: "border-emerald-500/30 bg-emerald-500/5 text-emerald-700 dark:text-emerald-300", active: riskScore <= 39, desc: "Below-average IHD risk; maintain healthy lifestyle." },
-                      { band: "40–69", label: "Moderate Risk", color: "border-amber-500/30 bg-amber-500/5 text-amber-700 dark:text-amber-300", active: riskScore > 39 && riskScore <= 69, desc: "Above-average risk; lifestyle modifications required." },
-                      { band: "70–100", label: "High Risk", color: "border-red-500/30 bg-red-500/5 text-red-700 dark:text-red-300", active: riskScore >= 70, desc: "Substantially elevated risk; urgent cardiologist referral." },
-                    ].map((t) => (
-                      <div
-                        key={t.band}
-                        className={`flex items-center justify-between p-3.5 rounded-2xl border transition-all ${
-                          t.active ? `${t.color} ring-2 ring-primary/20 shadow-sm` : "border-border/50 bg-background/50 opacity-60"
+              <div className="lg:col-span-7 rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-sm space-y-5">
+                <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-primary" /> Key Biomarker Influence
+                </h3>
+                <div className="space-y-3">
+                  {shapDrivers.slice(0, 4).map((d) => (
+                    <div key={d.feature} className="rounded-2xl border border-border/80 bg-muted/20 p-3.5 flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <div className="text-xs font-bold text-foreground">{d.label}</div>
+                        <div className="text-[11px] text-muted-foreground">Value: {d.value ?? "-"}</div>
+                      </div>
+                      <Badge
+                        variant="outline"
+                        className={`text-xs font-bold ${
+                          d.direction === "risk"
+                            ? "bg-red-500/10 text-red-600 border-red-500/20"
+                            : "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
                         }`}
                       >
-                        <div className="flex items-center gap-3">
-                          <span className="font-extrabold text-sm">{t.band}</span>
-                          <div>
-                            <span className="font-bold text-xs block">{t.label}</span>
-                            <span className="text-[11px] text-muted-foreground">{t.desc}</span>
-                          </div>
-                        </div>
-                        {t.active && (
-                          <Badge className="bg-primary text-primary-foreground text-[10px] font-bold uppercase">
-                            Active Case
-                          </Badge>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Prediction Consensus (5 Models) */}
-                <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
-                  <h3 className="text-sm font-bold text-foreground mb-4 flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-primary" /> Multi-Model Architectural Consensus
-                  </h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                    {modelResults.map((m) => (
-                      <div key={m.key} className="flex flex-col rounded-xl border border-border bg-muted/20 p-3 text-center">
-                        <span className="text-[11px] font-bold text-foreground truncate">{m.name.split(" ")[0]}</span>
-                        <span className="text-base font-extrabold text-primary mt-1">{(m.prob * 100).toFixed(0)}%</span>
-                        <span className="text-[10px] text-muted-foreground mt-0.5">Acc: {m.accuracy}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </TabsContent>
-
-          {/* TAB 2: AI Insights (SHAP) (Fig. 5) */}
-          <TabsContent value="explain" className="space-y-6">
-            <div className="grid gap-6 md:grid-cols-12">
-              {/* SHAP Bar Chart */}
-              <div className="md:col-span-7 rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-sm">
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <h3 className="text-base font-bold text-foreground">SHAP Feature Impact</h3>
-                    <p className="text-xs text-muted-foreground">Localized contribution to your individual IHD risk prediction.</p>
-                  </div>
-                  <div className="flex items-center gap-3 text-xs font-semibold">
-                    <span className="flex items-center gap-1 text-red-600 dark:text-red-400">
-                      <span className="h-2 w-2 rounded-full bg-red-500" /> + Increased Risk
-                    </span>
-                    <span className="flex items-center gap-1 text-blue-600 dark:text-blue-400">
-                      <span className="h-2 w-2 rounded-full bg-blue-500" /> - Protective
-                    </span>
-                  </div>
-                </div>
-
-                {/* Horizontal SHAP Bars */}
-                <div className="space-y-4">
-                  {shapDrivers.map((d) => {
-                    const isRisk = d.shap >= 0;
-                    const pct = Math.min(100, Math.abs(d.shap) * 180);
-                    return (
-                      <div key={d.feature} className="space-y-1">
-                        <div className="flex justify-between text-xs font-semibold">
-                          <span className="text-foreground">{d.label}</span>
-                          <span className={isRisk ? "text-red-600 dark:text-red-400 font-bold" : "text-blue-600 dark:text-blue-400 font-bold"}>
-                            {isRisk ? `+${d.shap.toFixed(3)}` : d.shap.toFixed(3)}
-                          </span>
-                        </div>
-                        <div className="h-2.5 w-full rounded-full bg-muted overflow-hidden flex">
-                          {isRisk ? (
-                            <div
-                              style={{ width: `${pct}%` }}
-                              className="h-full rounded-full bg-gradient-to-r from-red-500 to-rose-600 shadow-sm"
-                            />
-                          ) : (
-                            <div
-                              style={{ width: `${pct}%` }}
-                              className="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 shadow-sm"
-                            />
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* AI Clinical Summary Breakdown (Fig. 5) */}
-              <div className="md:col-span-5 rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-sm space-y-5">
-                <h3 className="text-base font-bold text-foreground flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-primary" /> AI Clinical Summary
-                </h3>
-
-                <div className="space-y-4">
-                  {shapDrivers.filter(d => d.direction === "risk").slice(0, 3).map((driver, idx) => (
-                    <div key={driver.feature} className="rounded-2xl border border-border bg-muted/20 p-4 space-y-1">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold text-red-600 dark:text-red-400 uppercase tracking-wider">
-                          DRIVER #{idx + 1}
-                        </span>
-                        <Badge variant="outline" className="text-[10px] font-semibold border-red-500/30 text-red-600 dark:text-red-400">
-                          STRONG CORRELATION
-                        </Badge>
-                      </div>
-                      <p className="text-xs font-bold text-foreground">{driver.label}</p>
-                      <p className="text-xs text-muted-foreground leading-relaxed">
-                        Your input value was flagged by the model. This factor is pushing your health profile into the IHD-positive segment by a factor of +{driver.shap.toFixed(3)}.
-                      </p>
+                        {d.shap > 0 ? `+${d.shap.toFixed(3)}` : d.shap.toFixed(3)} {d.direction === "risk" ? "Risk" : "Protective"}
+                      </Badge>
                     </div>
                   ))}
-
-                  {shapDrivers.some(d => d.direction === "protective") && (
-                    <div className="rounded-2xl border border-blue-500/20 bg-blue-500/5 p-4 space-y-1">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
-                          PROTECTIVE ASSETS
-                        </span>
-                        <Badge variant="outline" className="text-[10px] font-semibold border-blue-500/30 text-blue-600 dark:text-blue-400">
-                          RISK BUFFER
-                        </Badge>
-                      </div>
-                      <p className="text-xs font-bold text-foreground">
-                        {shapDrivers.filter(d => d.direction === "protective")[0]?.label}
-                      </p>
-                      <p className="text-xs text-muted-foreground leading-relaxed">
-                        Excellent! This parameter acts as a significant buffer in your health profile, reducing your overall composite score.
-                      </p>
-                    </div>
+                  {shapDrivers.length === 0 && (
+                    <p className="text-xs text-muted-foreground">Local feature attribution calculated for this profile.</p>
                   )}
                 </div>
               </div>
             </div>
           </TabsContent>
 
-          {/* TAB 3: Prevention Plan (Fig. 6) */}
+          {/* TAB 2: SHAP Drivers */}
+          <TabsContent value="shap" className="space-y-6">
+            <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-sm space-y-6">
+              <div>
+                <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-primary" /> Local SHAP Attribution Summary
+                </h3>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Game-theoretic feature attributions quantifying how each biomarker pushes risk higher (red) or lower (green) relative to the baseline.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                {shapDrivers.map((d) => (
+                  <div key={d.feature} className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-semibold text-foreground">{d.label}</span>
+                      <span className="font-mono text-muted-foreground">
+                        val={d.value} | SHAP: {d.shap > 0 ? `+${d.shap.toFixed(4)}` : d.shap.toFixed(4)}
+                      </span>
+                    </div>
+                    <div className="h-3 w-full rounded-full bg-muted/60 overflow-hidden flex">
+                      <div
+                        className={`h-full rounded-full transition-all duration-500 ${
+                          d.direction === "risk" ? "bg-red-500" : "bg-emerald-500 ml-auto"
+                        }`}
+                        style={{ width: `${Math.min(100, Math.max(8, Math.abs(d.shap) * 120))}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* TAB 3: Prevention Plan */}
           <TabsContent value="prevention" className="space-y-6">
-            <div className="grid gap-6 sm:grid-cols-2">
-              {/* Lifestyle Modifications */}
-              <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-sm space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Lifestyle */}
+              <div className="rounded-3xl border border-border bg-card p-6 shadow-sm space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                  <div className="h-10 w-10 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center font-bold">
                     <Activity className="h-5 w-5" />
                   </div>
-                  <h3 className="text-base font-bold text-foreground">Lifestyle Modifications</h3>
+                  <div>
+                    <h4 className="text-sm font-bold text-foreground">Lifestyle Guidance</h4>
+                    <p className="text-xs text-muted-foreground">Habits, stress & biometric monitoring</p>
+                  </div>
                 </div>
-                <ul className="space-y-2.5 text-xs text-muted-foreground">
+                <ul className="space-y-2 text-xs text-muted-foreground pt-2">
                   {recommendationsData.lifestyle.map((item, idx) => (
                     <li key={idx} className="flex items-start gap-2">
-                      <span className="h-1.5 w-1.5 rounded-full bg-blue-500 mt-1.5 shrink-0" />
-                      <span className="leading-relaxed">{item}</span>
+                      <ChevronRight className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                      <span>{item}</span>
                     </li>
                   ))}
                 </ul>
               </div>
 
-              {/* Dietary Guidance */}
-              <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-sm space-y-4">
+              {/* Diet */}
+              <div className="rounded-3xl border border-border bg-card p-6 shadow-sm space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                  <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-bold">
                     <Apple className="h-5 w-5" />
                   </div>
-                  <h3 className="text-base font-bold text-foreground">Dietary Guidance</h3>
+                  <div>
+                    <h4 className="text-sm font-bold text-foreground">Cardiovascular Nutrition</h4>
+                    <p className="text-xs text-muted-foreground">DASH/Mediterranean dietary principles</p>
+                  </div>
                 </div>
-                <ul className="space-y-2.5 text-xs text-muted-foreground">
+                <ul className="space-y-2 text-xs text-muted-foreground pt-2">
                   {recommendationsData.diet.map((item, idx) => (
                     <li key={idx} className="flex items-start gap-2">
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
-                      <span className="leading-relaxed">{item}</span>
+                      <ChevronRight className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                      <span>{item}</span>
                     </li>
                   ))}
                 </ul>
               </div>
 
-              {/* Physical Activity Strategy */}
-              <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-sm space-y-4">
+              {/* Physical Activity */}
+              <div className="rounded-3xl border border-border bg-card p-6 shadow-sm space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                  <div className="h-10 w-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold">
                     <Dumbbell className="h-5 w-5" />
                   </div>
-                  <h3 className="text-base font-bold text-foreground">Physical Activity</h3>
+                  <div>
+                    <h4 className="text-sm font-bold text-foreground">Physical Activity</h4>
+                    <p className="text-xs text-muted-foreground">Heart-rate adapted exercise prescription</p>
+                  </div>
                 </div>
-                <ul className="space-y-2.5 text-xs text-muted-foreground">
+                <ul className="space-y-2 text-xs text-muted-foreground pt-2">
                   {recommendationsData.activity.map((item, idx) => (
                     <li key={idx} className="flex items-start gap-2">
-                      <span className="h-1.5 w-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
-                      <span className="leading-relaxed">{item}</span>
+                      <ChevronRight className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                      <span>{item}</span>
                     </li>
                   ))}
                 </ul>
               </div>
 
-              {/* Medical Interventions & Referral */}
-              <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-sm space-y-4">
+              {/* Clinical & Physician Review */}
+              <div className="rounded-3xl border border-border bg-card p-6 shadow-sm space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center">
-                    <Pill className="h-5 w-5" />
+                  <div className="h-10 w-10 rounded-xl bg-red-500/10 text-red-600 flex items-center justify-center font-bold">
+                    <Stethoscope className="h-5 w-5" />
                   </div>
-                  <h3 className="text-base font-bold text-foreground">Medical Referral</h3>
+                  <div>
+                    <h4 className="text-sm font-bold text-foreground">Physician Review & Clinical Follow-up</h4>
+                    <p className="text-xs text-muted-foreground">Diagnostic workup recommendations</p>
+                  </div>
                 </div>
-                <ul className="space-y-2.5 text-xs text-muted-foreground">
+                <ul className="space-y-2 text-xs text-muted-foreground pt-2">
                   {recommendationsData.medical.map((item, idx) => (
                     <li key={idx} className="flex items-start gap-2">
-                      <span className="h-1.5 w-1.5 rounded-full bg-rose-500 mt-1.5 shrink-0" />
-                      <span className="leading-relaxed font-medium text-foreground">{item}</span>
+                      <ChevronRight className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
+                      <span className="font-medium text-foreground/90">{item}</span>
                     </li>
                   ))}
                 </ul>
@@ -631,92 +635,80 @@ export default function Results() {
             </div>
           </TabsContent>
 
-          {/* TAB 4: Clinical Details */}
-          <TabsContent value="details" className="space-y-6">
-            <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-sm overflow-x-auto">
-              <h3 className="text-base font-bold text-foreground mb-4">Patient Clinical Parameter Matrix</h3>
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="border-b border-border bg-muted/30">
-                    <th className="py-3 px-4 font-bold text-foreground">Feature</th>
-                    <th className="py-3 px-4 font-bold text-foreground">Input Value</th>
-                    <th className="py-3 px-4 font-bold text-foreground">Normal Reference Range</th>
-                    <th className="py-3 px-4 font-bold text-foreground">Clinical Interpretation</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/60">
-                  {featureFields.map((field) => (
-                    <tr key={field.name} className="hover:bg-muted/20 transition-colors">
-                      <td className="py-3 px-4 font-semibold text-foreground">{field.label} ({field.name})</td>
-                      <td className="py-3 px-4 font-bold text-primary">{patientData[field.name] || "-"} {field.unit}</td>
-                      <td className="py-3 px-4 text-muted-foreground">
-                        {field.type === "number" ? `${field.min}–${field.max} ${field.unit}` : "Categorical (0–3)"}
-                      </td>
-                      <td className="py-3 px-4 text-muted-foreground">{field.tooltip}</td>
+          {/* TAB 4: 5-Model Consensus */}
+          <TabsContent value="models" className="space-y-6">
+            <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-sm space-y-4">
+              <div>
+                <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                  <Layers className="h-5 w-5 text-primary" /> Multi-Model Architecture Consensus
+                </h3>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Individual probability estimates generated across the 5 machine learning models. XGBoost serves as the primary risk decision engine.
+                </p>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/30">
+                      <th className="py-3 px-4 font-bold text-foreground">Model</th>
+                      <th className="py-3 px-4 font-bold text-foreground">Role</th>
+                      <th className="py-3 px-4 font-bold text-foreground text-center">Benchmark Accuracy</th>
+                      <th className="py-3 px-4 font-bold text-foreground text-center">Calculated Probability</th>
+                      <th className="py-3 px-4 font-bold text-foreground text-right">Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-border/60">
+                    {modelResults.map((m) => (
+                      <tr key={m.name} className={m.key === "xgb" ? "bg-primary/5 font-semibold" : ""}>
+                        <td className="py-3.5 px-4 font-bold text-foreground">{m.name}</td>
+                        <td className="py-3.5 px-4 text-muted-foreground">{m.status}</td>
+                        <td className="py-3.5 px-4 text-center">{m.accuracy}</td>
+                        <td className="py-3.5 px-4 text-center font-mono">
+                          {m.prob !== null ? `${(m.prob * 100).toFixed(1)}%` : <span className="text-muted-foreground">N/A</span>}
+                        </td>
+                        <td className="py-3.5 px-4 text-right">
+                          {m.error ? (
+                            <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20 text-[10px]">
+                              Unavailable
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 text-[10px]">
+                              Active
+                            </Badge>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </TabsContent>
 
-          {/* TAB 5: Global Insights (Fig. 7) */}
-          <TabsContent value="global" className="space-y-6">
-            <div className="grid gap-6 md:grid-cols-12">
-              {/* Dataset Distribution Matrix */}
-              <div className="md:col-span-7 rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-sm space-y-4">
-                <h3 className="text-base font-bold text-foreground">Dataset Distribution Matrix</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Visualization of the UCI Cleveland target distribution (303 clinical samples) used to calibrate and train the AI-HealthGuard baseline models.
+          {/* TAB 5: Clinical Details */}
+          <TabsContent value="clinical" className="space-y-6">
+            <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-sm space-y-4">
+              <div>
+                <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                  <Activity className="h-5 w-5 text-primary" /> Submitted Clinical Biomarkers
+                </h3>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Reference values entered for this assessment session.
                 </p>
-                <div className="space-y-3 pt-4">
-                  <div>
-                    <div className="flex justify-between text-xs font-semibold mb-1">
-                      <span>No Ischemic Heart Disease (54.1%)</span>
-                      <span className="text-emerald-600 font-bold">164 Samples</span>
-                    </div>
-                    <div className="h-3 w-full bg-muted rounded-full overflow-hidden">
-                      <div className="h-full bg-emerald-500 rounded-full" style={{ width: "54.1%" }} />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex justify-between text-xs font-semibold mb-1">
-                      <span>Confirmed Ischemic Heart Disease (45.9%)</span>
-                      <span className="text-rose-600 font-bold">139 Samples</span>
-                    </div>
-                    <div className="h-3 w-full bg-muted rounded-full overflow-hidden">
-                      <div className="h-full bg-rose-500 rounded-full" style={{ width: "45.9%" }} />
-                    </div>
-                  </div>
-                </div>
               </div>
 
-              {/* Population Data Context (Fig. 7) */}
-              <div className="md:col-span-5 rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-sm space-y-5">
-                <span className="text-[11px] font-bold text-primary uppercase tracking-wider">POPULATION DATA</span>
-                <h3 className="text-base font-bold text-foreground">Patient Profile Context</h3>
-
-                <div className="space-y-3 border-y border-border py-4">
-                  <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">Prevalence in Training</span>
-                    <span className="font-bold text-foreground">46.1%</span>
-                  </div>
-                  <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">Mean Patient Age</span>
-                    <span className="font-bold text-foreground">54.4 yrs</span>
-                  </div>
-                  <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">Data Diversity Score</span>
-                    <span className="font-bold text-primary">High (UCI Standard)</span>
-                  </div>
-                </div>
-
-                <div className="rounded-2xl bg-primary/10 p-4 space-y-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-primary">MODEL BIAS HANDLING</span>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    We utilized SMOTE oversampling to ensure the model doesn't biasedly predict "No IHD" for borderline cases.
-                  </p>
-                </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                {featureFields.map((f) => {
+                  const val = patientData[f.name];
+                  return (
+                    <div key={f.name} className="rounded-2xl border border-border p-3.5 bg-muted/10 space-y-1">
+                      <div className="text-[11px] font-semibold text-muted-foreground">{f.label} ({f.name})</div>
+                      <div className="text-sm font-bold text-foreground font-mono">{val ?? "—"}</div>
+                      <div className="text-[10px] text-muted-foreground">{f.unit || "Categorical indicator"}</div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </TabsContent>
