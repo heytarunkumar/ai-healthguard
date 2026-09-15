@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Suspense, lazy } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -82,6 +83,7 @@ const App = () => (
             <div className="flex-1 w-full">
               <AnimatedRoutes />
             </div>
+            <Footer />
           </div>
         </BrowserRouter>
       </TooltipProvider>

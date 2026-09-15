@@ -35,6 +35,7 @@ import {
 import { featureFields, samplePresets } from "@/lib/mockData";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
+import { EcgWave } from "@/components/EcgWave";
 
 export default function RiskAssessment() {
   const [formData, setFormData] = useState<Record<string, string>>({
@@ -139,6 +140,11 @@ export default function RiskAssessment() {
     ["restecg", "ca", "thal"].includes(f.name)
   );
 
+  // Calculate filled parameters count
+  const filledCount = featureFields.filter(
+    (f) => formData[f.name] !== undefined && formData[f.name] !== ""
+  ).length;
+
   return (
     <main className="min-h-screen bg-background bg-aurora-mesh bg-grid-texture px-4 py-12 sm:px-6 lg:px-8" id="main-content">
       <div className="mx-auto max-w-5xl space-y-8">
@@ -157,6 +163,19 @@ export default function RiskAssessment() {
           <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
             Enter the patient's 13 clinical biomarkers to run real-time XGBoost inference, calculate localized SHAP attributions, and generate customized prevention recommendations.
           </p>
+
+          <div className="pt-2 flex items-center justify-center gap-2">
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold border transition-colors ${
+                filledCount === 13
+                  ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/25 shadow-glow-emerald"
+                  : "bg-muted/60 text-muted-foreground border-border"
+              }`}
+            >
+              <Activity className="h-3.5 w-3.5 text-primary animate-pulse" />
+              {filledCount}/13 Biomarkers Configured
+            </span>
+          </div>
         </div>
 
         {/* Preset Sample Bar */}
@@ -300,6 +319,8 @@ export default function RiskAssessment() {
             </Button>
           </div>
         </form>
+
+        <EcgWave className="max-w-4xl mx-auto" />
       </div>
     </main>
   );

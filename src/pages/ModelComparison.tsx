@@ -1,8 +1,38 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSEO } from "@/hooks/useSEO";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Cell, Legend } from "recharts";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar,
+  Cell,
+  Legend,
+  CartesianGrid,
+} from "recharts";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Cpu, Activity, BarChart3, Binary, ShieldCheck, CheckCircle2, Award, BookOpen, Layers } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Trophy,
+  Cpu,
+  Activity,
+  BarChart3,
+  Binary,
+  ShieldCheck,
+  CheckCircle2,
+  Award,
+  BookOpen,
+  Layers,
+  Sparkles,
+  Zap,
+} from "lucide-react";
 import { getModelMetrics, ModelMetric } from "@/lib/api";
 import { modelComparison as defaultModels } from "@/lib/mockData";
 import { motion } from "framer-motion";
@@ -12,6 +42,8 @@ export default function ModelComparison() {
     title: "Model Comparison & Benchmarks | AI-HealthGuard",
     description: "Empirical benchmark evaluation of the 5 machine learning models (XGBoost, Random Forest, SVM, Neural Network, Logistic Regression) tested across 5-fold and 10-fold cross-validation.",
   });
+
+  const [activeChartMetric, setActiveChartMetric] = useState<"all" | "accuracy" | "auc" | "f1">("all");
 
   const { data: metrics } = useQuery<ModelMetric[]>({
     queryKey: ["metrics"],
@@ -28,15 +60,23 @@ export default function ModelComparison() {
 
   const modelsList = defaultModels;
 
-  const chartData = modelsList.map(m => ({
-    name: m.model.split(" ")[0],
+  const chartData = modelsList.map((m) => ({
+    name: m.model.replace(" ★", "").split(" ")[0],
     fullName: m.model,
-    Accuracy: m.accuracy,
-    AUC: m.auc * 100,
-    F1: m.f1 * 100,
-    Precision: m.precision * 100,
-    Recall: m.recall * 100,
+    Accuracy: Number(m.accuracy.replace("%", "")),
+    AUC: Number((m.auc * 100).toFixed(1)),
+    F1: Number((m.f1 * 100).toFixed(1)),
+    Precision: Number((m.precision * 100).toFixed(1)),
+    Recall: Number((m.recall * 100).toFixed(1)),
   }));
+
+  const radarData = [
+    { metric: "Accuracy", XGB: 91.4, RF: 89.5, NN: 88.6, SVM: 87.8, LR: 82.9 },
+    { metric: "AUC-ROC", XGB: 96.3, RF: 94.5, NN: 94.0, SVM: 93.2, LR: 90.1 },
+    { metric: "Precision", XGB: 92.0, RF: 90.0, NN: 89.0, SVM: 88.5, LR: 83.3 },
+    { metric: "Recall", XGB: 90.3, RF: 87.1, NN: 86.0, SVM: 85.0, LR: 80.6 },
+    { metric: "F1-Score", XGB: 91.1, RF: 88.5, NN: 87.5, SVM: 86.7, LR: 82.0 },
+  ];
 
   const literatureBenchmarks = [
     { study: "Chang et al. (2022)", method: "Random Forest", dataset: "UCI Cleveland", acc: "83.0%", auc: "0.82", keyGap: "Adds SMOTE, SHAP, web deployment, prevention planning" },
@@ -61,6 +101,123 @@ export default function ModelComparison() {
           <p className="text-xs sm:text-base text-muted-foreground leading-relaxed">
             Rigorous empirical evaluation of 5 machine learning architectures across 25% holdout test sets, 5-fold and 10-fold stratified cross-validation on the UCI Cleveland Dataset.
           </p>
+        </div>
+
+        {/* Interactive Visual Charts Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Multi-Metric Bar Chart (7 Cols) */}
+          <div className="lg:col-span-7 card-elevated p-6 sm:p-8 space-y-6 flex flex-col justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-4">
+              <div>
+                <h2 className="font-heading text-base font-bold text-foreground flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-primary" /> Test Set Multi-Metric Comparison (%)
+                </h2>
+                <p className="text-xs text-muted-foreground">Comparative performance across accuracy, AUC, and F1 metrics.</p>
+              </div>
+
+              {/* Metric Selector Filter */}
+              <div className="flex items-center gap-1 bg-muted/40 p-1 rounded-xl border border-border">
+                <button
+                  type="button"
+                  onClick={() => setActiveChartMetric("all")}
+                  className={`rounded-lg px-2.5 py-1 text-[11px] font-bold transition-colors ${
+                    activeChartMetric === "all" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  All
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveChartMetric("accuracy")}
+                  className={`rounded-lg px-2.5 py-1 text-[11px] font-bold transition-colors ${
+                    activeChartMetric === "accuracy" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Accuracy
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveChartMetric("auc")}
+                  className={`rounded-lg px-2.5 py-1 text-[11px] font-bold transition-colors ${
+                    activeChartMetric === "auc" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  AUC
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveChartMetric("f1")}
+                  className={`rounded-lg px-2.5 py-1 text-[11px] font-bold transition-colors ${
+                    activeChartMetric === "f1" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  F1
+                </button>
+              </div>
+            </div>
+
+            <div className="h-[290px] w-full pt-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.15} vertical={false} />
+                  <XAxis dataKey="name" tick={{ fontSize: 11, fontWeight: 600 }} stroke="hsl(var(--muted-foreground))" />
+                  <YAxis domain={[70, 100]} tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "hsl(var(--card))",
+                      borderColor: "hsl(var(--border))",
+                      borderRadius: "1rem",
+                      boxShadow: "0 10px 25px -5px rgba(0,0,0,0.1)",
+                      fontSize: "12px",
+                      fontWeight: 600,
+                    }}
+                  />
+                  <Legend wrapperStyle={{ fontSize: "11px", paddingTop: "10px" }} />
+                  {(activeChartMetric === "all" || activeChartMetric === "accuracy") && (
+                    <Bar dataKey="Accuracy" fill="#3b82f6" radius={[6, 6, 0, 0]} name="Accuracy (%)" />
+                  )}
+                  {(activeChartMetric === "all" || activeChartMetric === "auc") && (
+                    <Bar dataKey="AUC" fill="#10b981" radius={[6, 6, 0, 0]} name="AUC-ROC (%)" />
+                  )}
+                  {(activeChartMetric === "all" || activeChartMetric === "f1") && (
+                    <Bar dataKey="F1" fill="#8b5cf6" radius={[6, 6, 0, 0]} name="F1-Score (%)" />
+                  )}
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Radar Chart (5 Cols) */}
+          <div className="lg:col-span-5 card-elevated p-6 sm:p-8 space-y-6 flex flex-col justify-between">
+            <div className="border-b border-border pb-4">
+              <h2 className="font-heading text-base font-bold text-foreground flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-amber-500" /> Multi-Dimensional Profile
+              </h2>
+              <p className="text-xs text-muted-foreground">XGBoost (Primary ★) vs. Random Forest & NN.</p>
+            </div>
+
+            <div className="h-[290px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <RadarChart data={radarData}>
+                  <PolarGrid stroke="hsl(var(--border))" />
+                  <PolarAngleAxis dataKey="metric" tick={{ fontSize: 10, fontWeight: 700, fill: "hsl(var(--foreground))" }} />
+                  <PolarRadiusAxis domain={[75, 100]} stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 9 }} />
+                  <Radar name="XGBoost (Star)" dataKey="XGB" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.4} />
+                  <Radar name="Random Forest" dataKey="RF" stroke="#10b981" fill="#10b981" fillOpacity={0.25} />
+                  <Radar name="Neural Net" dataKey="NN" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.2} />
+                  <Legend wrapperStyle={{ fontSize: "11px" }} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "hsl(var(--card))",
+                      borderColor: "hsl(var(--border))",
+                      borderRadius: "0.75rem",
+                      fontSize: "11px",
+                    }}
+                  />
+                </RadarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
         </div>
 
         {/* Table 10: Test Set Performance Results (All Models) */}
@@ -102,66 +259,20 @@ export default function ModelComparison() {
                       <span>{m.model}</span>
                     </td>
                     <td className="py-3.5 px-4 text-muted-foreground">{m.type}</td>
-                    <td className="py-3.5 px-4 text-center font-bold text-primary">{m.accuracy.toFixed(1)}%</td>
-                    <td className="py-3.5 px-4 text-center text-foreground">{m.precision.toFixed(2)}</td>
-                    <td className="py-3.5 px-4 text-center text-foreground">{m.recall.toFixed(2)}</td>
-                    <td className="py-3.5 px-4 text-center text-foreground">{m.f1.toFixed(2)}</td>
-                    <td className="py-3.5 px-4 text-center font-bold text-emerald-600 dark:text-emerald-400">{m.auc.toFixed(2)}</td>
+                    <td className="py-3.5 px-4 text-center font-semibold text-primary">{m.accuracy}</td>
+                    <td className="py-3.5 px-4 text-center font-mono">{m.precision}</td>
+                    <td className="py-3.5 px-4 text-center font-mono">{m.recall}</td>
+                    <td className="py-3.5 px-4 text-center font-mono">{m.f1}</td>
+                    <td className="py-3.5 px-4 text-center font-mono text-emerald-600 dark:text-emerald-400 font-bold">{m.auc}</td>
                     <td className="py-3.5 px-4 text-right">
-                      <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold text-[11px] bg-emerald-500/10 px-2 py-0.5 rounded-md">
-                        <CheckCircle2 className="h-3 w-3" /> Yes
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                        <CheckCircle2 className="h-3.5 w-3.5" /> Exceeded
                       </span>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
-        </div>
-
-        {/* Visual Charts Comparison */}
-        <div className="grid gap-6 lg:grid-cols-12">
-          {/* Accuracy & AUC Comparison Bar Chart */}
-          <div className="lg:col-span-8 rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-sm space-y-4">
-            <h3 className="text-base font-bold text-foreground flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-primary" /> Comparative Accuracy & AUC Metric Analytics
-            </h3>
-            <div className="h-[320px] w-full pt-4">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
-                  <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                  <YAxis domain={[70, 100]} tick={{ fontSize: 10 }} />
-                  <Tooltip
-                    contentStyle={{ backgroundColor: "hsl(var(--card))", borderColor: "hsl(var(--border))", borderRadius: 12, fontSize: 12 }}
-                  />
-                  <Legend wrapperStyle={{ fontSize: 11, paddingTop: 10 }} />
-                  <Bar dataKey="Accuracy" fill="#2563eb" radius={[6, 6, 0, 0]} />
-                  <Bar dataKey="AUC" fill="#10b981" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          {/* Radar Chart */}
-          <div className="lg:col-span-4 rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-sm space-y-4 flex flex-col justify-between">
-            <h3 className="text-base font-bold text-foreground flex items-center gap-2">
-              <Activity className="h-5 w-5 text-primary" /> Model Weight Distribution
-            </h3>
-            <div className="h-[280px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <RadarChart data={chartData}>
-                  <PolarGrid strokeOpacity={0.2} />
-                  <PolarAngleAxis dataKey="name" tick={{ fontSize: 9 }} />
-                  <PolarRadiusAxis domain={[70, 100]} hide />
-                  <Radar name="Accuracy" dataKey="Accuracy" stroke="#2563eb" fill="#2563eb" fillOpacity={0.2} />
-                  <Radar name="AUC" dataKey="AUC" stroke="#10b981" fill="#10b981" fillOpacity={0.2} />
-                </RadarChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="flex justify-center gap-4 text-xs font-semibold">
-              <span className="flex items-center gap-1.5 text-blue-600"><span className="h-2.5 w-2.5 rounded-full bg-blue-600" /> Accuracy</span>
-              <span className="flex items-center gap-1.5 text-emerald-600"><span className="h-2.5 w-2.5 rounded-full bg-emerald-600" /> AUC-ROC</span>
-            </div>
           </div>
         </div>
 

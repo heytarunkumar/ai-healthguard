@@ -25,6 +25,10 @@ import {
   Info,
   Building2,
   RefreshCw,
+  Copy,
+  Check,
+  CheckSquare,
+  Square,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -48,6 +52,8 @@ export default function Results() {
   });
 
   const [activeTab, setActiveTab] = useState("risk");
+  const [copied, setCopied] = useState(false);
+  const [completedHabits, setCompletedHabits] = useState<Record<string, boolean>>({});
   const sessionId = useMemo(() => `AI-${Math.random().toString(36).substring(2, 8).toUpperCase()}`, []);
 
   // API Query for Real Inference & SHAP using src/lib/api.ts abstraction
@@ -161,12 +167,43 @@ export default function Results() {
     return [];
   }, [apiData, riskScore]);
 
+  const handleCopySummary = () => {
+    const text = `AI-HEALTHGUARD | CLINICAL RISK ASSESSMENT SUMMARY
+Session ID: ${sessionId}
+Date: ${new Date().toLocaleDateString()}
+Calculated IHD Risk Score: ${riskScore}/100 [ ${riskLevel} ]
+Primary Model: XGBoost (Probability: ${(apiData?.probability ? apiData.probability * 100 : 0).toFixed(1)}%)
+
+TOP SHAP BIOMARKER DRIVERS:
+${shapDrivers.slice(0, 5).map((d) => `- ${d.label}: value=${d.value} (${d.direction === "risk" ? "+" : ""}${d.shap.toFixed(3)})`).join("\n")}
+
+RECOMMENDED PREVENTIVE ACTIONS:
+Lifestyle: ${recommendationsData.lifestyle.slice(0, 2).join("; ")}
+Diet: ${recommendationsData.diet.slice(0, 2).join("; ")}
+Activity: ${recommendationsData.activity.slice(0, 2).join("; ")}
+Medical: ${recommendationsData.medical.slice(0, 2).join("; ")}
+
+Disclaimer: Clinical decision support research tool. Consult a cardiologist for clinical evaluation.`;
+
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    toast({
+      title: "Summary Copied to Clipboard",
+      description: "Clinical summary report copied as text.",
+    });
+    setTimeout(() => setCopied(false), 2500);
+  };
+
+  const toggleHabit = (id: string) => {
+    setCompletedHabits((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
   // PDF Export Function
   const handleDownloadPDF = () => {
     try {
       const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-      const primaryColor = [37, 99, 235]; // Blue
-      const darkColor = [15, 23, 42]; // Slate-900
+      const primaryColor = [37, 99, 235];
+      const darkColor = [15, 23, 42];
 
       // Header Banner
       doc.setFillColor(darkColor[0], darkColor[1], darkColor[2]);
@@ -302,14 +339,14 @@ export default function Results() {
 
   if (!patientData) {
     return (
-      <main className="min-h-[80vh] flex flex-col items-center justify-center px-4 text-center" id="main-content">
+      <main className="min-h-[80vh] flex flex-col items-center justify-center px-4 text-center bg-aurora-mesh bg-grid-texture" id="main-content">
         <Heart className="mb-4 h-16 w-16 text-muted-foreground/40 animate-pulse" />
-        <h2 className="text-2xl font-bold text-foreground">No Assessment Active</h2>
-        <p className="mt-2 text-sm text-muted-foreground max-w-sm">
+        <h2 className="font-heading text-2xl font-bold text-foreground">No Assessment Active</h2>
+        <p className="mt-2 text-xs sm:text-sm text-muted-foreground max-w-sm">
           Please input clinical parameters to calculate IHD risk, localized SHAP drivers, and prevention plans.
         </p>
         <Link to="/assess" className="mt-6">
-          <Button size="lg" className="rounded-xl font-bold">
+          <Button size="lg" className="btn-cta-glow rounded-xl font-bold">
             Launch New Assessment <ArrowRight className="h-4 w-4 ml-2" />
           </Button>
         </Link>
@@ -365,31 +402,42 @@ export default function Results() {
     <main className="min-h-screen bg-background bg-aurora-mesh bg-grid-texture px-4 py-10 sm:px-6 lg:px-8" id="main-content">
       <div className="mx-auto max-w-6xl space-y-8">
         {/* Header Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/80 pb-6">
           <div>
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               <span>Session ID: {sessionId}</span>
               <span>•</span>
               <span className="text-primary font-bold">XGBoost Primary (SF-2 Top-10)</span>
             </div>
-            <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
+            <h1 className="font-heading mt-1 text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
               IHD Risk Assessment Results
             </h1>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <Button
+              onClick={handleCopySummary}
+              variant="outline"
+              size="sm"
+              className="h-10 rounded-xl border-border hover:bg-muted font-bold gap-2 shadow-sm"
+            >
+              {copied ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+              <span>{copied ? "Copied" : "Copy Summary"}</span>
+            </Button>
+
             <Button
               onClick={handleDownloadPDF}
               variant="outline"
               size="sm"
-              className="h-10 rounded-xl border-border hover:bg-primary hover:text-primary-foreground font-semibold gap-2 transition-all shadow-sm"
+              className="h-10 rounded-xl border-border hover:bg-primary hover:text-primary-foreground font-bold gap-2 shadow-sm transition-all"
             >
               <Download className="h-4 w-4" /> PDF Report
             </Button>
+
             <Link to="/assess">
               <Button
                 size="sm"
-                className="h-10 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 font-semibold gap-2 shadow-sm"
+                className="btn-cta-glow h-10 rounded-xl px-4 font-bold gap-2 shadow-sm"
               >
                 <RotateCcw className="h-4 w-4" /> New Assessment
               </Button>
@@ -401,15 +449,15 @@ export default function Results() {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`flex items-start gap-4 rounded-2xl p-5 border shadow-sm ${
+          className={`flex items-start gap-4 rounded-3xl p-5 border shadow-sm ${
             riskScore <= 39
-              ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-900 dark:text-emerald-200"
+              ? "bg-emerald-500/10 border-emerald-500/25 text-emerald-950 dark:text-emerald-200"
               : riskScore <= 69
-              ? "bg-amber-500/10 border-amber-500/20 text-amber-900 dark:text-amber-200"
-              : "bg-red-500/10 border-red-500/20 text-red-900 dark:text-red-200"
+              ? "bg-amber-500/10 border-amber-500/25 text-amber-950 dark:text-amber-200"
+              : "bg-red-500/10 border-red-500/25 text-red-950 dark:text-red-200"
           }`}
         >
-          <div className="mt-0.5 rounded-lg p-2 bg-background/50 backdrop-blur-sm">
+          <div className="mt-0.5 rounded-xl p-2.5 bg-background/70 backdrop-blur-md shadow-sm">
             {riskScore <= 39 ? (
               <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
             ) : riskScore <= 69 ? (
@@ -419,7 +467,7 @@ export default function Results() {
             )}
           </div>
           <div>
-            <h3 className="font-bold text-sm sm:text-base">
+            <h3 className="font-heading font-extrabold text-sm sm:text-base">
               {riskScore <= 39
                 ? "Low Risk Profile Confirmed (0–39 Band)"
                 : riskScore <= 69
@@ -438,7 +486,7 @@ export default function Results() {
 
         {/* 5 Tabs Interface */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid grid-cols-2 sm:grid-cols-5 h-auto p-1.5 bg-muted/60 rounded-2xl gap-1">
+          <TabsList className="grid grid-cols-2 sm:grid-cols-5 h-auto p-1.5 bg-muted/70 backdrop-blur-md rounded-2xl gap-1 border border-border">
             <TabsTrigger value="risk" className="rounded-xl py-2.5 font-bold text-xs sm:text-sm">
               <Heart className="h-4 w-4 mr-2" /> Risk Overview
             </TabsTrigger>
@@ -459,37 +507,26 @@ export default function Results() {
           {/* TAB 1: Risk Overview */}
           <TabsContent value="risk" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              <div className="lg:col-span-5 rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-sm flex flex-col items-center justify-center text-center">
+              <div className="lg:col-span-5 card-elevated p-6 sm:p-8 flex flex-col items-center justify-center text-center">
                 <RiskGauge score={riskScore} size="lg" />
-                <div className="mt-6 flex items-center justify-center gap-2">
-                  <Badge
-                    className={`px-3 py-1 text-xs font-bold rounded-full border ${
-                      riskScore <= 39
-                        ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
-                        : riskScore <= 69
-                        ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
-                        : "bg-red-500/10 text-red-600 border-red-500/20"
-                    }`}
-                  >
-                    {riskLevel}
-                  </Badge>
-                  <span className="text-xs text-muted-foreground">Threshold: 70+</span>
-                </div>
-                <p className="mt-4 text-xs text-muted-foreground max-w-xs">
+                <p className="mt-5 text-xs text-muted-foreground max-w-xs">
                   XGBoost probability estimate: <strong className="text-foreground">{(apiData.probability * 100).toFixed(1)}%</strong>
                 </p>
               </div>
 
-              <div className="lg:col-span-7 rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-sm space-y-5">
-                <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-primary" /> Key Biomarker Influence
-                </h3>
+              <div className="lg:col-span-7 card-elevated p-6 sm:p-8 space-y-5">
+                <div className="flex items-center justify-between border-b border-border pb-3">
+                  <h3 className="font-heading text-base font-bold text-foreground flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5 text-primary" /> Top Biomarker Impact Factors
+                  </h3>
+                  <span className="text-[11px] font-semibold text-muted-foreground">TreeExplainer</span>
+                </div>
                 <div className="space-y-3">
                   {shapDrivers.slice(0, 4).map((d) => (
-                    <div key={d.feature} className="rounded-2xl border border-border/80 bg-muted/20 p-3.5 flex items-center justify-between">
+                    <div key={d.feature} className="rounded-2xl border border-border/80 bg-card/60 p-3.5 flex items-center justify-between">
                       <div className="space-y-0.5">
                         <div className="text-xs font-bold text-foreground">{d.label}</div>
-                        <div className="text-[11px] text-muted-foreground">Value: {d.value ?? "-"}</div>
+                        <div className="text-[11px] text-muted-foreground font-mono">Patient Value: {d.value ?? "-"}</div>
                       </div>
                       <Badge
                         variant="outline"
@@ -513,9 +550,9 @@ export default function Results() {
 
           {/* TAB 2: SHAP Drivers */}
           <TabsContent value="shap" className="space-y-6">
-            <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-sm space-y-6">
+            <div className="card-elevated p-6 sm:p-8 space-y-6">
               <div>
-                <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                <h3 className="font-heading text-lg font-bold text-foreground flex items-center gap-2">
                   <Sparkles className="h-5 w-5 text-primary" /> Local SHAP Attribution Summary
                 </h3>
                 <p className="text-xs text-muted-foreground mt-1">
@@ -525,17 +562,17 @@ export default function Results() {
 
               <div className="space-y-4">
                 {shapDrivers.map((d) => (
-                  <div key={d.feature} className="space-y-1.5">
+                  <div key={d.feature} className="space-y-1.5 p-3 rounded-2xl bg-muted/20 border border-border/60">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="font-semibold text-foreground">{d.label}</span>
+                      <span className="font-bold text-foreground">{d.label}</span>
                       <span className="font-mono text-muted-foreground">
-                        val={d.value} | SHAP: {d.shap > 0 ? `+${d.shap.toFixed(4)}` : d.shap.toFixed(4)}
+                        val={d.value} | Impact: <strong className={d.direction === "risk" ? "text-red-500" : "text-emerald-500"}>{d.shap > 0 ? `+${d.shap.toFixed(4)}` : d.shap.toFixed(4)}</strong>
                       </span>
                     </div>
-                    <div className="h-3 w-full rounded-full bg-muted/60 overflow-hidden flex">
+                    <div className="h-2.5 w-full rounded-full bg-muted overflow-hidden flex">
                       <div
                         className={`h-full rounded-full transition-all duration-500 ${
-                          d.direction === "risk" ? "bg-red-500" : "bg-emerald-500 ml-auto"
+                          d.direction === "risk" ? "bg-red-500 shadow-glow-red" : "bg-emerald-500 ml-auto shadow-glow-emerald"
                         }`}
                         style={{ width: `${Math.min(100, Math.max(8, Math.abs(d.shap) * 120))}%` }}
                       />
@@ -550,84 +587,114 @@ export default function Results() {
           <TabsContent value="prevention" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Lifestyle */}
-              <div className="rounded-3xl border border-border bg-card p-6 shadow-sm space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center font-bold">
+              <div className="card-elevated p-6 space-y-4">
+                <div className="flex items-center gap-3 border-b border-border pb-3">
+                  <div className="h-10 w-10 rounded-2xl bg-blue-500/10 text-blue-500 border border-blue-500/20 flex items-center justify-center font-bold">
                     <Activity className="h-5 w-5" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-foreground">Lifestyle Guidance</h4>
-                    <p className="text-xs text-muted-foreground">Habits, stress & biometric monitoring</p>
+                    <h4 className="font-heading text-sm font-bold text-foreground">Lifestyle Modifications</h4>
+                    <p className="text-[11px] text-muted-foreground">Habits, stress & tracking protocols</p>
                   </div>
                 </div>
-                <ul className="space-y-2 text-xs text-muted-foreground pt-2">
-                  {recommendationsData.lifestyle.map((item, idx) => (
-                    <li key={idx} className="flex items-start gap-2">
-                      <ChevronRight className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                      <span>{item}</span>
-                    </li>
-                  ))}
+                <ul className="space-y-2.5 text-xs text-muted-foreground">
+                  {recommendationsData.lifestyle.map((item, idx) => {
+                    const id = `lifestyle-${idx}`;
+                    const isDone = completedHabits[id];
+                    return (
+                      <li
+                        key={idx}
+                        onClick={() => toggleHabit(id)}
+                        className={`flex items-start gap-2.5 p-2.5 rounded-xl border cursor-pointer transition-all ${
+                          isDone ? "bg-primary/10 border-primary/30 text-foreground line-through opacity-70" : "bg-muted/20 border-border/60 hover:bg-muted/40 text-foreground"
+                        }`}
+                      >
+                        {isDone ? <CheckSquare className="h-4 w-4 text-primary shrink-0 mt-0.5" /> : <Square className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />}
+                        <span>{item}</span>
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
 
               {/* Diet */}
-              <div className="rounded-3xl border border-border bg-card p-6 shadow-sm space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-bold">
+              <div className="card-elevated p-6 space-y-4">
+                <div className="flex items-center gap-3 border-b border-border pb-3">
+                  <div className="h-10 w-10 rounded-2xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 flex items-center justify-center font-bold">
                     <Apple className="h-5 w-5" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-foreground">Cardiovascular Nutrition</h4>
-                    <p className="text-xs text-muted-foreground">DASH/Mediterranean dietary principles</p>
+                    <h4 className="font-heading text-sm font-bold text-foreground">Cardiovascular Nutrition</h4>
+                    <p className="text-[11px] text-muted-foreground">DASH & Mediterranean dietary guidelines</p>
                   </div>
                 </div>
-                <ul className="space-y-2 text-xs text-muted-foreground pt-2">
-                  {recommendationsData.diet.map((item, idx) => (
-                    <li key={idx} className="flex items-start gap-2">
-                      <ChevronRight className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
-                      <span>{item}</span>
-                    </li>
-                  ))}
+                <ul className="space-y-2.5 text-xs text-muted-foreground">
+                  {recommendationsData.diet.map((item, idx) => {
+                    const id = `diet-${idx}`;
+                    const isDone = completedHabits[id];
+                    return (
+                      <li
+                        key={idx}
+                        onClick={() => toggleHabit(id)}
+                        className={`flex items-start gap-2.5 p-2.5 rounded-xl border cursor-pointer transition-all ${
+                          isDone ? "bg-emerald-500/10 border-emerald-500/30 text-foreground line-through opacity-70" : "bg-muted/20 border-border/60 hover:bg-muted/40 text-foreground"
+                        }`}
+                      >
+                        {isDone ? <CheckSquare className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" /> : <Square className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />}
+                        <span>{item}</span>
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
 
               {/* Physical Activity */}
-              <div className="rounded-3xl border border-border bg-card p-6 shadow-sm space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold">
+              <div className="card-elevated p-6 space-y-4">
+                <div className="flex items-center gap-3 border-b border-border pb-3">
+                  <div className="h-10 w-10 rounded-2xl bg-amber-500/10 text-amber-500 border border-amber-500/20 flex items-center justify-center font-bold">
                     <Dumbbell className="h-5 w-5" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-foreground">Physical Activity</h4>
-                    <p className="text-xs text-muted-foreground">Heart-rate adapted exercise prescription</p>
+                    <h4 className="font-heading text-sm font-bold text-foreground">Physical Activity</h4>
+                    <p className="text-[11px] text-muted-foreground">Heart-rate adapted training targets</p>
                   </div>
                 </div>
-                <ul className="space-y-2 text-xs text-muted-foreground pt-2">
-                  {recommendationsData.activity.map((item, idx) => (
-                    <li key={idx} className="flex items-start gap-2">
-                      <ChevronRight className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
-                      <span>{item}</span>
-                    </li>
-                  ))}
+                <ul className="space-y-2.5 text-xs text-muted-foreground">
+                  {recommendationsData.activity.map((item, idx) => {
+                    const id = `activity-${idx}`;
+                    const isDone = completedHabits[id];
+                    return (
+                      <li
+                        key={idx}
+                        onClick={() => toggleHabit(id)}
+                        className={`flex items-start gap-2.5 p-2.5 rounded-xl border cursor-pointer transition-all ${
+                          isDone ? "bg-amber-500/10 border-amber-500/30 text-foreground line-through opacity-70" : "bg-muted/20 border-border/60 hover:bg-muted/40 text-foreground"
+                        }`}
+                      >
+                        {isDone ? <CheckSquare className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" /> : <Square className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />}
+                        <span>{item}</span>
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
 
-              {/* Clinical & Physician Review */}
-              <div className="rounded-3xl border border-border bg-card p-6 shadow-sm space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-xl bg-red-500/10 text-red-600 flex items-center justify-center font-bold">
+              {/* Clinical Referral */}
+              <div className="card-elevated p-6 space-y-4">
+                <div className="flex items-center gap-3 border-b border-border pb-3">
+                  <div className="h-10 w-10 rounded-2xl bg-red-500/10 text-red-500 border border-red-500/20 flex items-center justify-center font-bold">
                     <Stethoscope className="h-5 w-5" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-foreground">Physician Review & Clinical Follow-up</h4>
-                    <p className="text-xs text-muted-foreground">Diagnostic workup recommendations</p>
+                    <h4 className="font-heading text-sm font-bold text-foreground">Clinical Specialist Follow-up</h4>
+                    <p className="text-[11px] text-muted-foreground">Diagnostic workup recommendations</p>
                   </div>
                 </div>
-                <ul className="space-y-2 text-xs text-muted-foreground pt-2">
+                <ul className="space-y-2.5 text-xs text-muted-foreground">
                   {recommendationsData.medical.map((item, idx) => (
-                    <li key={idx} className="flex items-start gap-2">
+                    <li key={idx} className="flex items-start gap-2 p-2.5 rounded-xl bg-red-500/5 border border-red-500/20 text-foreground">
                       <ChevronRight className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
-                      <span className="font-medium text-foreground/90">{item}</span>
+                      <span className="font-medium">{item}</span>
                     </li>
                   ))}
                 </ul>
@@ -637,9 +704,9 @@ export default function Results() {
 
           {/* TAB 4: 5-Model Consensus */}
           <TabsContent value="models" className="space-y-6">
-            <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-sm space-y-4">
+            <div className="card-elevated p-6 sm:p-8 space-y-4">
               <div>
-                <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                <h3 className="font-heading text-lg font-bold text-foreground flex items-center gap-2">
                   <Layers className="h-5 w-5 text-primary" /> Multi-Model Architecture Consensus
                 </h3>
                 <p className="text-xs text-muted-foreground mt-1">
@@ -688,9 +755,9 @@ export default function Results() {
 
           {/* TAB 5: Clinical Details */}
           <TabsContent value="clinical" className="space-y-6">
-            <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-sm space-y-4">
+            <div className="card-elevated p-6 sm:p-8 space-y-4">
               <div>
-                <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                <h3 className="font-heading text-lg font-bold text-foreground flex items-center gap-2">
                   <Activity className="h-5 w-5 text-primary" /> Submitted Clinical Biomarkers
                 </h3>
                 <p className="text-xs text-muted-foreground mt-1">
@@ -702,7 +769,7 @@ export default function Results() {
                 {featureFields.map((f) => {
                   const val = patientData[f.name];
                   return (
-                    <div key={f.name} className="rounded-2xl border border-border p-3.5 bg-muted/10 space-y-1">
+                    <div key={f.name} className="rounded-2xl border border-border/80 p-3.5 bg-card/50 space-y-1">
                       <div className="text-[11px] font-semibold text-muted-foreground">{f.label} ({f.name})</div>
                       <div className="text-sm font-bold text-foreground font-mono">{val ?? "—"}</div>
                       <div className="text-[10px] text-muted-foreground">{f.unit || "Categorical indicator"}</div>

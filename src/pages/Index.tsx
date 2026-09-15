@@ -23,6 +23,8 @@ import logo from "@/assets/logo.png";
 import { useSEO } from "@/hooks/useSEO";
 import { getModelMetrics, ModelMetric } from "@/lib/api";
 
+import { EcgWave } from "@/components/EcgWave";
+
 export default function Index() {
   useSEO({
     title: "AI-HealthGuard | Clinical Ischemic Heart Disease Risk Assessment & Explainable AI",
@@ -171,6 +173,9 @@ export default function Index() {
             </Link>
           </motion.div>
         </div>
+
+        {/* Animated ECG Pulse Wave */}
+        <EcgWave className="my-8 max-w-5xl mx-auto" />
 
         {/* 4 Stat Cards */}
         <div className="mx-auto mt-16 max-w-5xl px-4">
