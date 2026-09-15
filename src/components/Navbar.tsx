@@ -30,29 +30,36 @@ export function Navbar() {
  </span>
  </Link>
 
- {/* Desktop */}
+      {/* Desktop */}
       <div className="hidden items-center gap-1 md:flex">
         {navItems.map((item) => (
           <Link
             key={item.path}
             to={item.path}
-            className={`relative rounded-xl px-5 py-2.5 text-sm font-bold transition-all ${location.pathname === item.path
-              ?"text-primary"
-              :"text-muted-foreground hover:text-foreground"
+            className={`relative rounded-xl px-4 py-2 text-sm font-semibold transition-all ${
+              location.pathname === item.path
+                ? "text-primary"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             {location.pathname === item.path && (
               <motion.div
                 layoutId="nav-active"
-                className="absolute inset-0 rounded-xl bg-primary/10"
-                transition={{ type:"spring", bounce: 0.2, duration: 0.6 }}
+                className="absolute inset-0 rounded-xl bg-primary/10 border border-primary/20"
+                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
               />
             )}
             <span className="relative z-10">{item.label}</span>
           </Link>
         ))}
-        <div className="ml-4 border-l border-primary/10 pl-4">
+        <div className="ml-3 flex items-center gap-3 border-l border-border/60 pl-3">
           <ThemeToggle />
+          <Link
+            to="/assess"
+            className="rounded-lg bg-primary px-4 py-2 text-xs font-bold text-primary-foreground shadow-sm transition-all hover:bg-primary/90 hover:shadow-md"
+          >
+            Launch Assessment
+          </Link>
         </div>
       </div>
 

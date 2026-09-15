@@ -7,21 +7,21 @@ export function RiskGauge({ score }: RiskGaugeProps) {
  const angle = (clampedScore / 100) * 180 - 90; // -90 to 90 degrees
 
  const getColor = () => {
- if (clampedScore <= 40) return"hsl(var(--risk-low))";
- if (clampedScore <= 70) return"hsl(var(--risk-moderate))";
- return"hsl(var(--risk-high))";
+ if (clampedScore <= 39) return "hsl(var(--risk-low, 142 76% 36%))";
+ if (clampedScore <= 69) return "hsl(var(--risk-moderate, 38 92% 50%))";
+ return "hsl(var(--risk-high, 0 84% 60%))";
  };
 
  const getLabel = () => {
- if (clampedScore <= 40) return"LOW RISK";
- if (clampedScore <= 70) return"MODERATE RISK";
- return"HIGH RISK";
+ if (clampedScore <= 39) return "LOW RISK";
+ if (clampedScore <= 69) return "MODERATE RISK";
+ return "HIGH RISK";
  };
 
  const getLabelColor = () => {
- if (clampedScore <= 40) return"text-risk-low";
- if (clampedScore <= 70) return"text-risk-moderate";
- return"text-risk-high";
+ if (clampedScore <= 39) return "text-emerald-600 dark:text-emerald-400";
+ if (clampedScore <= 69) return "text-amber-600 dark:text-amber-400";
+ return "text-red-600 dark:text-red-400";
  };
 
  const radius = 100;

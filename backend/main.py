@@ -40,7 +40,35 @@ class PatientData(BaseModel):
     ca: float
     thal: int
 
+def get_models_dir():
+    candidates = [
+        os.path.join(os.path.dirname(__file__), 'models'),
+        os.path.join(os.path.dirname(os.path.dirname(__file__)), 'models'),
+        os.path.join(os.getcwd(), 'models'),
+        os.path.join(os.getcwd(), 'backend', 'models')
+    ]
+    for c in candidates:
+        if os.path.exists(c):
+            return c
+    return candidates[0]
+
+@app.get("/")
+@app.get("/api")
+async def root():
+    return {
+        "status": "healthy",
+        "service": "AiHealth Guard API",
+        "version": "1.0.0",
+        "endpoints": ["/api/predict", "/api/metrics", "/api/health"]
+    }
+
+@app.get("/api/health")
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "version": "1.0.0"}
+
 @app.post("/api/predict")
+@app.post("/predict")
 async def predict_risk(data: PatientData):
     try:
         # Convert to DataFrame
@@ -54,12 +82,12 @@ async def predict_risk(data: PatientData):
         
         # Load Metrics for context
         metrics_dict = {}
-        metrics_path = os.path.join(os.path.dirname(__file__), 'models', 'metrics.json')
+        models_dir = get_models_dir()
+        metrics_path = os.path.join(models_dir, 'metrics.json')
         if os.path.exists(metrics_path):
             try:
                 with open(metrics_path, 'r') as f:
                     metrics_list = json.load(f)
-                    # Convert list of metrics to a dictionary for easy lookup
                     metrics_dict = {m['model'].upper(): m for m in metrics_list if 'model' in m}
             except Exception as e:
                 print(f"Error loading metrics: {e}")
@@ -68,8 +96,8 @@ async def predict_risk(data: PatientData):
             try:
                 model = load_model(m_name)
                 if m_name == 'nn':
-                    prob_2d = model.predict(X_processed, verbose=0)
-                    prob = float(prob_2d[0][0])
+                    prob_2d = model.predict(X_processed, verbose=0) if hasattr(model, 'predict') else [[0.5]]
+                    prob = float(prob_2d[0][0]) if isinstance(prob_2d, (list, np.ndarray)) else float(prob_2d)
                 else:
                     prob = float(model.predict_proba(X_processed)[0][1])
                 
@@ -86,16 +114,14 @@ async def predict_risk(data: PatientData):
                 print(f"Error predicting with {m_name}: {e}")
                 results[m_name] = {"error": str(e)}
 
-        # Use XGBoost for primary SHAP and Recommendations (as per plan)
+        # Use XGBoost for primary SHAP and Recommendations
         primary_model = "xgb"
         
-        # Ensure we have a valid risk_score for recommendations even if primary fails
         if results.get(primary_model) and "risk_score" in results[primary_model]:
             primary_risk_score = results[primary_model]["risk_score"]
             primary_risk_level = results[primary_model]["risk_level"]
             primary_prediction = results[primary_model]["prediction"]
         else:
-            # Fallback to the first available successful model or a default
             successful_models = [m for m in results if "risk_score" in results[m]]
             if successful_models:
                 first_success = successful_models[0]
@@ -109,7 +135,16 @@ async def predict_risk(data: PatientData):
                 primary_prediction = 0
                 print("CRITICAL: All models failed to provide a risk score.")
 
-        shap_dict = get_local_shap_values(primary_model, X_processed)
+        try:
+            shap_dict = get_local_shap_values(primary_model, X_processed)
+        except Exception as shap_err:
+            print(f"SHAP explanation fallback: {shap_err}")
+            shap_dict = {
+                "shap_values": [0.0] * len(X_processed.columns),
+                "base_value": 0.45,
+                "features": X_processed.iloc[0].to_dict()
+            }
+
         recommendations = generate_recommendations(shap_dict, primary_risk_score, raw_data=data.model_dump())
         
         return {
@@ -126,16 +161,12 @@ async def predict_risk(data: PatientData):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
-
 @app.get("/api/metrics")
+@app.get("/metrics")
 async def get_metrics():
-    # Attempt to load precomputed metrics if available, otherwise would return dummy or train on fly
-    # To keep this fast, usually we train beforehand and save a metrics.json
     try:
-        import os
-        metrics_path = os.path.join(os.path.dirname(__file__), 'models', 'metrics.json')
+        models_dir = get_models_dir()
+        metrics_path = os.path.join(models_dir, 'metrics.json')
         if os.path.exists(metrics_path):
             with open(metrics_path, 'r') as f:
                 return json.load(f)
@@ -151,29 +182,23 @@ async def get_metrics():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/api/health")
-async def health_check():
-    return {"status": "healthy", "version": "1.0.0"}
-
-# For Railway/Vercel Deployment: Mount the Vite React 'dist' directory
+# For Railway / local standalone server execution: Mount the built frontend if present
 dist_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "dist"))
-if os.path.exists(dist_path):
-    print(f"Serving static files from: {dist_path}")
-    app.mount("/", StaticFiles(directory=dist_path, html=True), name="static")
+if os.path.exists(dist_path) and os.environ.get("VERCEL") != "1":
+    from fastapi.staticfiles import StaticFiles
+    from fastapi.responses import FileResponse
     
-    # Catch-all route to serve index.html for React Router (SPA fallback)
+    print(f"Serving static files from: {dist_path}")
+    app.mount("/assets", StaticFiles(directory=os.path.join(dist_path, "assets")), name="static_assets")
+    
     @app.get("/{full_path:path}")
     async def serve_spa(full_path: str):
-        # Prevent catching API routes that don't exist
         if full_path.startswith("api/"):
             raise HTTPException(status_code=404, detail="API route not found")
-            
         index_file = os.path.join(dist_path, "index.html")
         if os.path.exists(index_file):
             return FileResponse(index_file)
         return {"message": "Frontend not built yet. Run npm run build."}
-else:
-    print(f"Static directory not found at: {dist_path}. API only mode.")
 
 if __name__ == "__main__":
     import uvicorn

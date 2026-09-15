@@ -158,6 +158,18 @@ def apply_preprocessing_and_smote(X_train, y_train):
     
     return X_resampled, y_resampled
 
+def get_models_dir():
+    candidates = [
+        os.path.join(os.path.dirname(__file__), '..', 'models'),
+        os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'models'),
+        os.path.join(os.getcwd(), 'models'),
+        os.path.join(os.getcwd(), 'backend', 'models')
+    ]
+    for c in candidates:
+        if os.path.exists(c):
+            return c
+    return candidates[0]
+
 def preprocess_for_inference(X_raw):
     """
     Applies the saved scaler and selects SF_2_FEATURES for inference.
@@ -169,7 +181,7 @@ def preprocess_for_inference(X_raw):
     current_features = X_inter.columns.tolist()
     
     # 2. Safety Imputation using IterativeImputer
-    models_dir = os.path.join(os.path.dirname(__file__), '..', 'models')
+    models_dir = get_models_dir()
     imputer_path = os.path.join(models_dir, 'imputer.pkl')
     
     if os.path.exists(imputer_path):
@@ -201,10 +213,5 @@ def preprocess_for_inference(X_raw):
         X_inter[num_cols] = scaler.transform(X_inter[num_cols])
     else:
         print("WARNING: scaler.pkl not found.")
-    
-    # 4. Final Feature Selection (for Models that require it)
-    # Note: For simplicity in the API, we keep X_inter as the base. 
-    # The Model class or Inference logic should apply selector.transform(X_inter) 
-    # if the specific model used feature selection.
     
     return X_inter

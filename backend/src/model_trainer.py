@@ -4,8 +4,6 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
 from sklearn.svm import SVC
-from tensorflow.keras.models import Sequential # type: ignore
-from tensorflow.keras.layers import Dense, Dropout # type: ignore
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, StratifiedKFold
@@ -152,16 +150,47 @@ class MockModel:
         # Ignore extra arguments like 'verbose'
         return (np.sum(X.values) % 100) > 50
 
+def get_models_dir():
+    candidates = [
+        os.path.join(os.path.dirname(__file__), '..', 'models'),
+        os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'models'),
+        os.path.join(os.getcwd(), 'models'),
+        os.path.join(os.getcwd(), 'backend', 'models')
+    ]
+    for c in candidates:
+        if os.path.exists(c):
+            return c
+    return candidates[0]
+
 def load_model(model_name="xgb"):
-    models_dir = os.path.join(os.path.dirname(__file__), '..', 'models')
-    model_path = os.path.join(models_dir, 'nn.keras' if model_name == "nn" else f'{model_name}.pkl')
+    models_dir = get_models_dir()
+    filename = 'nn.keras' if model_name == "nn" else f'{model_name}.pkl'
+    model_path = os.path.join(models_dir, filename)
     
+    if not os.path.exists(model_path):
+        # Try checking other candidate directories directly
+        for candidate_dir in [
+            os.path.join(os.path.dirname(__file__), '..', 'models'),
+            os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'models'),
+            os.path.join(os.getcwd(), 'models'),
+            os.path.join(os.getcwd(), 'backend', 'models')
+        ]:
+            alt_path = os.path.join(candidate_dir, filename)
+            if os.path.exists(alt_path):
+                model_path = alt_path
+                break
+                
     if not os.path.exists(model_path):
         print(f"WARNING: Model {model_name} not found at {model_path}. Starting in DEMO MODE.")
         return MockModel(model_name)
         
     if model_name == "nn":
-        from tensorflow.keras.models import load_model as keras_load_model
-        return keras_load_model(model_path)
+        try:
+            from tensorflow.keras.models import load_model as keras_load_model
+            return keras_load_model(model_path)
+        except Exception as e:
+            print(f"WARNING: Could not load Keras NN model ({e}). Using fallback.")
+            return MockModel("nn")
     else:
         return joblib.load(model_path)
+

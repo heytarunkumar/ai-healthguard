@@ -16,13 +16,15 @@ def generate_recommendations(shap_dict, risk_score, raw_data=None):
     # Match SHAP value index to SF-2 feature names
     from .preprocessor import SF_2_FEATURES
     
-    shap_values = shap_dict["shap_values"]
+    shap_values = shap_dict.get("shap_values", [])
+    features_dict = shap_dict.get("features", {})
+    feature_names = list(features_dict.keys()) if features_dict else SF_2_FEATURES
     
     # Sort features by SHAP value (descending to find top risk increasers)
-    shap_pairs = list(zip(SF_2_FEATURES, shap_values))
-    shap_pairs.sort(key=lambda x: x[1], reverse=True)
+    shap_pairs = list(zip(feature_names, shap_values))
+    shap_pairs.sort(key=lambda x: x[1] if isinstance(x[1], (int, float)) else 0, reverse=True)
     
-    top_risk_factors = [f[0] for f in shap_pairs if f[1] > 0][:3]
+    top_risk_factors = [f[0] for f in shap_pairs if isinstance(f[1], (int, float)) and f[1] > 0][:3]
     
     # Use raw_data if available for threshold checks (more accurate than scaled values)
     ref_vals = raw_data if raw_data is not None else shap_dict["features"]

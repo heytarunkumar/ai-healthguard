@@ -1,166 +1,159 @@
-import { FileText, Download, ExternalLink, BookOpen, Cpu, Sparkles, Files, Info } from"lucide-react";
-import { Button } from"@/components/ui/button";
-import { Badge } from"@/components/ui/badge";
-import { motion, AnimatePresence } from"framer-motion";
+import { FileText, Download, ExternalLink, BookOpen, Cpu, Sparkles, Files, Info, Layers, CheckCircle2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { motion } from "framer-motion";
 import { useSEO } from "@/hooks/useSEO";
-
-const containerVariants = {
- hidden: { opacity: 0 },
- visible: {
- opacity: 1,
- transition: { staggerChildren: 0.15 }
- }
-};
-
-const itemVariants = {
- hidden: { opacity: 0, y: 20 },
- visible: { opacity: 1, y: 0, transition: { type:"spring" as const, stiffness: 100 } }
-};
 
 export default function Documentation() {
   useSEO({
-    title: "Clinical Documentation | AiHealth Guard",
-    description: "Access project reports, product requirements, and clinical system documentation for AiHealth Guard.",
+    title: "Project Documentation & 6-Layer Architecture | AI-HealthGuard",
+    description: "Access complete technical documentation, 6-layer pipeline specifications, and downloadable academic project reports for AI-HealthGuard.",
   });
 
- const documents = [
- {
- title:"Project Final Report",
- desc:"Comprehensive 8-page final year B.Tech major project report including ML methodology, EDA, and system architecture.",
- file:"/AIHealthGuard_Project_Report.pdf",
- type:"PDF",
- icon: FileText,
- primary: true
- },
- {
- title:"Product Requirements Document (PRD)",
- desc:"Core functional and non-functional requirements, user personas, and health diagnostic scope.",
- file:"/AiHealth_Guard_PRD.docx",
- type:"DOCX",
- icon: BookOpen,
- primary: false
- },
- {
- title:"ML Pipeline & Colab Notebook",
- desc:"Live training scripts, dataset cleaning (SMOTE), and model optimization (XGBoost) logic.",
- file:"/AiHealth_Guard_Colab_Pipeline.ipynb",
- type:"IPYNB",
- icon: Cpu,
- primary: false
- }
-];
+  const documents = [
+    {
+      title: "Project Final Report (PDF)",
+      desc: "Complete 54-page final year B.Tech major project report including literature review, CRISP-DM methodology, 6-layer pipeline, SHAP analysis, and Turnitin similarity index.",
+      file: "/AIHealthGuard_Project_Report.pdf",
+      type: "PDF",
+      icon: FileText,
+      primary: true,
+    },
+    {
+      title: "Product Requirements Document (PRD)",
+      desc: "Core functional specifications, user personas, clinical diagnostic scope, and acceptance criteria.",
+      file: "/AiHealth_Guard_PRD.docx",
+      type: "DOCX",
+      icon: BookOpen,
+      primary: false,
+    },
+    {
+      title: "Google Colab ML Pipeline",
+      desc: "Sequential 7-cell reproducible pipeline (SMOTE class balancing, SF-2 feature selection, GridSearchCV tuning, SHAP explainers).",
+      file: "/AiHealth_Guard_Colab_Pipeline.ipynb",
+      type: "IPYNB",
+      icon: Cpu,
+      primary: false,
+    },
+  ];
 
- return (
-  <main className="min-h-screen px-6 py-16 bg-background relative overflow-hidden" id="main-content">
- {/* Decorative Elements */}
- <div className="absolute top-0 right-0 -z-10 h-[600px] w-[600px] bg-primary/5 blur-[160px] rounded-full translate-x-1/2 -translate-y-1/2" />
- <div className="absolute bottom-0 left-0 -z-10 h-[600px] w-[600px] bg-emerald-500/5 blur-[160px] rounded-full -translate-x-1/2 translate-y-1/2" />
+  const pipelineLayers = [
+    { layer: "L1", name: "Data Layer", module: "data_loader.py", desc: "Loads and version-controls the raw UCI Cleveland CSV dataset (303 samples, 13 features)." },
+    { layer: "L2", name: "Preprocessing Layer", module: "preprocessor.py", desc: "Imputation (median/mode), target binarization, one-hot encoding, SF-2 top-10 feature selection, and SMOTE oversampling." },
+    { layer: "L3", name: "Model Training Layer", module: "model_trainer.py, evaluator.py", desc: "Trains, tunes (GridSearchCV), evaluates, and serializes all 5 ML models (XGB ★, RF, LR, SVM, NN)." },
+    { layer: "L4", name: "Inference Layer", module: "inference_engine.py / API", desc: "Loads serialized model artifacts (.pkl, .keras), preprocesses incoming clinical inputs, and returns risk probabilities in <3s." },
+    { layer: "L5", name: "Explainability Layer", module: "explainer.py", desc: "Computes localized and global SHAP values using TreeExplainer and KernelExplainer across all 4 visualization formats." },
+    { layer: "L6", name: "Presentation Layer", module: "app.py / React, recommender.py, risk_scorer.py", desc: "Interactive UI dashboards, circular risk gauge, 4-tier prevention engine, and clinical PDF report generation." },
+  ];
 
- <motion.div 
- variants={containerVariants}
- initial="hidden"
- animate="visible"
- className="mx-auto max-w-7xl"
- >
- <motion.div variants={itemVariants} className="mb-16 text-center">
- <Badge variant="outline" className="mb-6 border-primary/20 bg-primary/5 text-primary uppercase font-semibold tracking-[0.3em] px-5 py-1.5 rounded-full">Archive & Specs</Badge>
- <h1 className="mb-4 text-5xl font-semibold text-slate-800 sm:text-6xl">Project Documentation</h1>
- <p className="mx-auto max-w-2xl text-muted-foreground text-lg font-medium opacity-80 leading-relaxed">
- Exploration of the technical foundations, product strategy, and clinical validation protocols of the AiHealth Guard ecosystem.
- </p>
- </motion.div>
+  return (
+    <main className="min-h-screen bg-background px-4 py-12 sm:px-6 lg:px-8" id="main-content">
+      <div className="mx-auto max-w-7xl space-y-12">
+        {/* Header */}
+        <div className="text-center max-w-3xl mx-auto">
+          <Badge variant="outline" className="mb-3 border-primary/30 bg-primary/5 text-primary text-xs font-semibold uppercase tracking-wider">
+            Technical Specification & Archive
+          </Badge>
+          <h1 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-5xl">
+            Project Documentation
+          </h1>
+          <p className="mt-3 text-sm sm:text-base text-muted-foreground leading-relaxed">
+            Architectural specifications, ML pipeline reproduction guidelines, and official B.Tech project artifacts for AI-HealthGuard.
+          </p>
+        </div>
 
- <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-3 mb-20">
- {documents.map((doc, i) => (
- <motion.div 
- key={doc.title} 
- variants={itemVariants}
- className={`group relative glass-card rounded-[2.5rem] p-10 shadow-sm transition-all hover:scale-[1.02] border-2 border-transparent hover:border-primary/10 flex flex-col`}
- >
- <div className={`mb-10 flex h-16 w-16 items-center justify-center rounded-[1.25rem] transition-all group-hover:scale-110 ${doc.primary ? 'bg-primary text-white shadow-md' : 'bg-muted/30 text-muted-foreground group-hover:bg-primary group-hover:text-white'}`}>
- <doc.icon className="h-8 w-8" />
- </div>
- <div className="mb-4 flex items-center justify-between">
- <Badge variant="outline" className="font-semibold text-[9px] uppercase border-2 rounded-lg bg-background/50 px-3">{doc.type}</Badge>
- {doc.primary && <Badge className="bg-primary text-white font-semibold text-[9px] uppercase rounded-lg shadow-sm">Master Copy</Badge>}
- </div>
- <h3 className="mb-4 text-2xl font-semibold text-slate-800 leading-tight">{doc.title}</h3>
- <p className="mb-10 text-sm font-medium leading-relaxed text-muted-foreground flex-1">{doc.desc}</p>
- 
- <div className="flex gap-4">
- <Button asChild className={`flex-1 h-14 rounded-md font-semibold gap-3 shadow-xl transition-all ${doc.primary ? 'bg-gradient-primary text-white shadow-primary/30' : 'bg-slate-100 text-slate-800 hover:bg-slate-200 shadow-none'}`}>
- <a href={doc.file} download>
- <Download className="h-5 w-5" /> Download
- </a>
- </Button>
- {doc.type ==="PDF" && (
- <Button variant="outline" size="icon" asChild className="h-14 w-14 rounded-md border-2 hover:bg-muted shadow-md bg-white">
- <a href={doc.file} target="_blank" rel="noreferrer">
- <ExternalLink className="h-5 w-5" />
- </a>
- </Button>
- )}
- </div>
- </motion.div>
- ))}
- </div>
+        {/* Downloadable Documents */}
+        <div className="grid gap-6 md:grid-cols-3">
+          {documents.map((doc) => (
+            <div
+              key={doc.title}
+              className={`rounded-3xl border bg-card p-6 shadow-sm flex flex-col justify-between transition-all hover:shadow-md ${
+                doc.primary ? "border-primary/40 bg-primary/5" : "border-border"
+              }`}
+            >
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${doc.primary ? "bg-primary text-primary-foreground shadow-md" : "bg-muted text-foreground"}`}>
+                    <doc.icon className="h-6 w-6" />
+                  </div>
+                  <Badge variant={doc.primary ? "default" : "outline"} className="text-[10px] font-bold uppercase">
+                    {doc.type}
+                  </Badge>
+                </div>
+                <h3 className="text-lg font-bold text-foreground mb-2">{doc.title}</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed mb-6">{doc.desc}</p>
+              </div>
 
- {/* Global Stats or Features Bar */}
- <motion.div variants={itemVariants} className="mb-20 grid gap-8 sm:grid-cols-3">
- {[
- { label:"Dataset Context", text:"Cleveland UCI", icon: Files },
- { label:"Clinical Precision", text:"SHAP Integrated", icon: Sparkles },
- { label:"Deployment", text:"React/Python", icon: Cpu }
-].map((feat, idx) => (
- <div key={idx} className="flex items-center gap-5 p-6 rounded-[2rem] bg-muted/20 border-2 border-transparent">
- <div className="h-12 w-12 rounded-xl bg-white border shadow-sm flex items-center justify-center text-primary"><feat.icon className="h-5 w-5" /></div>
- <div>
- <p className="text-[10px] font-semibold uppercase text-muted-foreground/60">{feat.label}</p>
- <p className="font-semibold text-slate-800">{feat.text}</p>
- </div>
- </div>
- ))}
- </motion.div>
+              <div className="flex gap-2 pt-4 border-t border-border/60">
+                <Button asChild size="sm" className={`flex-1 rounded-xl font-semibold gap-2 ${doc.primary ? "bg-primary text-primary-foreground" : "bg-muted text-foreground hover:bg-muted/80"}`}>
+                  <a href={doc.file} download>
+                    <Download className="h-4 w-4" /> Download
+                  </a>
+                </Button>
+                {doc.type === "PDF" && (
+                  <Button variant="outline" size="icon" asChild className="h-9 w-9 rounded-xl border-border">
+                    <a href={doc.file} target="_blank" rel="noreferrer" title="Open in new tab">
+                      <ExternalLink className="h-4 w-4" />
+                    </a>
+                  </Button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
 
- {/* PDF Preview Section */}
- <motion.div variants={itemVariants} className="relative group">
- <div className="absolute -inset-4 bg-gradient-to-r from-primary/10 to-blue-500/10 rounded-[3.5rem] blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
- <div className="relative glass-card rounded-[3rem] p-5 shadow-sm overflow-hidden border-2 border-white/50">
- <div className="flex flex-col sm:flex-row items-center justify-between p-8 border-b border-muted/30">
- <div className="flex items-center gap-5 mb-4 sm:mb-0">
- <div className="h-3 w-3 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(37,99,235,0.5)]" />
- <div>
- <span className="text-xs font-semibold uppercase text-muted-foreground flex items-center gap-2">
- <FileText className="h-3 w-3" /> Technical Review Case Study
- </span>
- <h4 className="font-semibold text-xl text-slate-800 mt-1">interactive_report_preview.pdf</h4>
- </div>
- </div>
- <Button variant="outline" className="h-11 px-6 rounded-xl border-2 font-semibold transition-all hover:bg-primary hover:text-white hover:border-primary shadow-md bg-white" asChild>
- <a href="/AIHealthGuard_Project_Report.pdf" target="_blank" className="gap-2 uppercase text-[10px]">
- Full Protocol Review <ExternalLink className="h-3 w-3" />
- </a>
- </Button>
- </div>
- <div className="relative aspect-[16/10] w-full bg-slate-50/50 rounded-b-[2rem] overflow-hidden">
- <iframe 
- src="/AIHealthGuard_Project_Report.pdf#toolbar=0" 
- className="absolute inset-0 h-full w-full border-0"
- title="Project Report Preview"
- />
- <div className="absolute inset-0 pointer-events-none border-[12px] border-white/10 rounded-b-[2rem]" />
- </div>
- <div className="p-10 bg-primary text-center text-[11px] font-bold text-white/40 uppercase">
- <Info className="h-3 w-3 inline mr-2 text-primary" />
- Live clinical documentation archive &bull; Confidentiality Protocol Enabled
- </div>
- </div>
- </motion.div>
+        {/* 6-Layers Pipeline Architecture (Table 2 in Report) */}
+        <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-sm space-y-6">
+          <div className="border-b border-border pb-4">
+            <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+              <Layers className="h-5 w-5 text-primary" /> System Architecture: 6-Layers Pipeline (Table 2)
+            </h2>
+            <p className="text-xs text-muted-foreground mt-1">
+              Modular pipeline design operating in offline training mode (L1–L3) and online inference mode (L4–L6).
+            </p>
+          </div>
 
- <footer className="mt-24 text-center text-[10px] font-semibold uppercase tracking-[0.5em] text-muted-foreground/30">
- &copy; 2026 AiHealth Guard Repository &bull; Institutional Access Only
- </footer>
- </motion.div>
- </main>
- );
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {pipelineLayers.map((l) => (
+              <div key={l.layer} className="p-5 rounded-2xl border border-border bg-background space-y-2">
+                <div className="flex items-center justify-between">
+                  <Badge className="bg-primary/10 text-primary border-primary/20 text-[11px] font-mono font-bold">
+                    {l.layer}
+                  </Badge>
+                  <span className="text-[11px] font-mono text-muted-foreground">{l.module}</span>
+                </div>
+                <h3 className="font-bold text-sm text-foreground">{l.name}</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">{l.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Embedded PDF Viewer Section */}
+        <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-sm space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-4">
+            <div>
+              <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                <FileText className="h-5 w-5 text-primary" /> Interactive Project Report Document
+              </h2>
+              <p className="text-xs text-muted-foreground">Direct inline preview of AIHealthGuard_Project_Report.pdf</p>
+            </div>
+            <Button variant="outline" size="sm" asChild className="rounded-xl border-border font-semibold gap-2">
+              <a href="/AIHealthGuard_Project_Report.pdf" target="_blank" rel="noreferrer">
+                <ExternalLink className="h-4 w-4" /> Open Full Screen
+              </a>
+            </Button>
+          </div>
+
+          <div className="aspect-[16/10] w-full rounded-2xl overflow-hidden border border-border bg-muted/20">
+            <iframe
+              src="/AIHealthGuard_Project_Report.pdf#toolbar=1"
+              className="h-full w-full border-0"
+              title="AI-HealthGuard Project Report PDF"
+            />
+          </div>
+        </div>
+      </div>
+    </main>
+  );
 }
