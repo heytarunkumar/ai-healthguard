@@ -13,7 +13,6 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis,
   Radar,
-  Cell,
   Legend,
   CartesianGrid,
 } from "recharts";
@@ -32,15 +31,21 @@ import {
   Layers,
   Sparkles,
   Zap,
+  Info,
+  ShieldAlert,
+  Sliders,
+  Check,
+  Flame,
 } from "lucide-react";
 import { getModelMetrics, ModelMetric } from "@/lib/api";
 import { modelComparison as defaultModels } from "@/lib/mockData";
 import { motion } from "framer-motion";
+import { TrustSafetyBanner } from "@/components/TrustSafetyBanner";
 
 export default function ModelComparison() {
   useSEO({
-    title: "Model Comparison & Benchmarks | AI-HealthGuard",
-    description: "Empirical benchmark evaluation of the 5 machine learning models (XGBoost, Random Forest, SVM, Neural Network, Logistic Regression) tested across 5-fold and 10-fold cross-validation.",
+    title: "Model Transparency Center & Global Insights | AI-HealthGuard",
+    description: "Model transparency cards, global feature importance insights, dataset limitations panel, and empirical benchmark evaluations for 5 machine learning models.",
   });
 
   const [activeChartMetric, setActiveChartMetric] = useState<"all" | "accuracy" | "auc" | "f1">("all");
@@ -59,6 +64,117 @@ export default function ModelComparison() {
   });
 
   const modelsList = defaultModels;
+
+  // Model Cards Data for Concept 7: Model Transparency Center
+  const modelCards = [
+    {
+      id: "xgb",
+      name: "XGBoost Classifier",
+      badge: "Primary Model (Enforced ★)",
+      isPrimary: true,
+      type: "Gradient Boosted Decision Trees",
+      accuracy: "91.4%",
+      auc: "0.94",
+      f1: "0.91",
+      precision: "92.0%",
+      recall: "90.3%",
+      dataset: "UCI Cleveland (SF-2 top-10 subset)",
+      features: "10 Features (Ranked via Mutual Info & RF)",
+      explainability: "TreeExplainer (Exact Fast SHAP)",
+      stability: "10-Fold CV: 89.8% ± 4.1% (Lowest variance)",
+      version: "v2.4.1 (SF-2 Architecture)",
+      status: "Production Primary",
+      highlight: "Highest discriminative separation (AUC 0.94) and superior handling of non-linear biomarker interactions.",
+    },
+    {
+      id: "rf",
+      name: "Random Forest Classifier",
+      badge: "Ensemble Validator",
+      isPrimary: false,
+      type: "Bagging Ensemble (100 Trees)",
+      accuracy: "89.5%",
+      auc: "0.92",
+      f1: "0.89",
+      precision: "90.0%",
+      recall: "87.1%",
+      dataset: "UCI Cleveland (SF-2 top-10 subset)",
+      features: "10 Features",
+      explainability: "TreeExplainer Available",
+      stability: "10-Fold CV: 87.9% ± 4.7%",
+      version: "v1.8.0",
+      status: "Active Ensemble Baseline",
+      highlight: "Strong generalization with low overfitting risk via out-of-bag bootstrap aggregation.",
+    },
+    {
+      id: "nn",
+      name: "Neural Network (MLP)",
+      badge: "Deep Learning Baseline",
+      isPrimary: false,
+      type: "Multilayer Perceptron (ReLU, Dropout)",
+      accuracy: "88.6%",
+      auc: "0.91",
+      f1: "0.88",
+      precision: "89.0%",
+      recall: "86.0%",
+      dataset: "UCI Cleveland (Standardized)",
+      features: "10 Features",
+      explainability: "KernelExplainer / Integrated Gradients",
+      stability: "10-Fold CV: 86.8% ± 6.4%",
+      version: "v1.2.0",
+      status: "Active DL Comparator",
+      highlight: "Dense non-linear representations; exhibits slightly higher cross-validation variance on small cohort sizes.",
+    },
+    {
+      id: "svm",
+      name: "Support Vector Machine",
+      badge: "Kernel Classifier",
+      isPrimary: false,
+      type: "Radial Basis Function (RBF Kernel)",
+      accuracy: "87.8%",
+      auc: "0.89",
+      f1: "0.87",
+      precision: "88.5%",
+      recall: "85.0%",
+      dataset: "UCI Cleveland (Standardized)",
+      features: "10 Features",
+      explainability: "KernelExplainer",
+      stability: "10-Fold CV: 86.4% ± 5.1%",
+      version: "v1.0.0",
+      status: "Active Kernel Baseline",
+      highlight: "Optimal margin boundary separation in transformed high-dimensional Hilbert space.",
+    },
+    {
+      id: "lr",
+      name: "Logistic Regression",
+      badge: "Linear Baseline",
+      isPrimary: false,
+      type: "L2-Regularized Generalized Linear Model",
+      accuracy: "82.9%",
+      auc: "0.84",
+      f1: "0.83",
+      precision: "82.0%",
+      recall: "84.0%",
+      dataset: "UCI Cleveland (Standardized)",
+      features: "10 Features",
+      explainability: "Direct Odds Ratios & Linear Coefficients",
+      stability: "10-Fold CV: 81.8% ± 5.3%",
+      version: "v1.0.0",
+      status: "Active Linear Bound",
+      highlight: "Interpretable odds ratios; bounded by inability to capture complex non-linear feature interactions.",
+    },
+  ];
+
+  // Global SHAP Feature Importance (Concept 8)
+  const globalImportance = [
+    { rank: 1, feature: "Chest-Pain Type (cp)", score: 0.44, role: "Symptom Severity", color: "#3b82f6" },
+    { rank: 2, feature: "Major Vessels Colored (ca)", score: 0.39, role: "Anatomic Stenosis", color: "#6366f1" },
+    { rank: 3, feature: "Thalassemia Defect (thal)", score: 0.36, role: "Perfusion Integrity", color: "#8b5cf6" },
+    { rank: 4, feature: "ST Depression (oldpeak)", score: 0.31, role: "Exercise Hypoxia", color: "#ec4899" },
+    { rank: 5, feature: "Max Heart Rate (thalach)", score: 0.28, role: "Coronary Reserve (Protective)", color: "#10b981" },
+    { rank: 6, feature: "Serum Cholesterol (chol)", score: 0.22, role: "Atherogenic Lipid", color: "#f59e0b" },
+    { rank: 7, feature: "Resting BP (trestbps)", score: 0.17, role: "Vascular Wall Tension", color: "#ef4444" },
+    { rank: 8, feature: "Exercise Angina (exang)", score: 0.14, role: "Exertional Symptom", color: "#14b8a6" },
+  ];
 
   const chartData = modelsList.map((m) => ({
     name: m.model.replace(" ★", "").split(" ")[0],
@@ -88,134 +204,305 @@ export default function ModelComparison() {
   ];
 
   return (
-    <main className="min-h-screen bg-background bg-aurora-mesh bg-grid-texture px-4 py-12 sm:px-6 lg:px-8" id="main-content">
+    <main className="min-h-screen bg-background bg-aurora-mesh bg-grid-texture px-4 py-10 sm:px-6 lg:px-8" id="main-content">
       <div className="mx-auto max-w-7xl space-y-12">
-        {/* Header */}
+        
+        {/* Header Section */}
         <div className="text-center max-w-3xl mx-auto space-y-3">
           <Badge variant="outline" className="border-primary/30 bg-primary/5 text-primary text-xs font-bold uppercase tracking-wider">
-            Layer 3 Evaluation
+            Clinical AI Governance
           </Badge>
           <h1 className="font-heading text-3xl font-extrabold tracking-tight text-foreground sm:text-5xl">
-            Machine Learning Model Comparison
+            Model Transparency Center
           </h1>
           <p className="text-xs sm:text-base text-muted-foreground leading-relaxed">
-            Rigorous empirical evaluation of 5 machine learning architectures across 25% holdout test sets, 5-fold and 10-fold stratified cross-validation on the UCI Cleveland Dataset.
+            Full transparency documentation, cross-validation metrics, global SHAP feature importance, and empirical evaluations across the 5 machine learning architectures.
           </p>
         </div>
 
-        {/* Interactive Visual Charts Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Multi-Metric Bar Chart (7 Cols) */}
-          <div className="lg:col-span-7 card-elevated p-6 sm:p-8 space-y-6 flex flex-col justify-between">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-4">
-              <div>
-                <h2 className="font-heading text-base font-bold text-foreground flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5 text-primary" /> Test Set Multi-Metric Comparison (%)
-                </h2>
-                <p className="text-xs text-muted-foreground">Comparative performance across accuracy, AUC, and F1 metrics.</p>
-              </div>
+        {/* CONCEPT 7: Model Cards Grid */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="font-heading text-xl font-bold text-foreground flex items-center gap-2">
+              <Layers className="h-5 w-5 text-primary" /> Architecture Model Cards
+            </h2>
+            <span className="text-xs font-semibold text-muted-foreground">5 Models Evaluated</span>
+          </div>
 
-              {/* Metric Selector Filter */}
-              <div className="flex items-center gap-1 bg-muted/40 p-1 rounded-xl border border-border">
-                <button
-                  type="button"
-                  onClick={() => setActiveChartMetric("all")}
-                  className={`rounded-lg px-2.5 py-1 text-[11px] font-bold transition-colors ${
-                    activeChartMetric === "all" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  All
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveChartMetric("accuracy")}
-                  className={`rounded-lg px-2.5 py-1 text-[11px] font-bold transition-colors ${
-                    activeChartMetric === "accuracy" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  Accuracy
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveChartMetric("auc")}
-                  className={`rounded-lg px-2.5 py-1 text-[11px] font-bold transition-colors ${
-                    activeChartMetric === "auc" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  AUC
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveChartMetric("f1")}
-                  className={`rounded-lg px-2.5 py-1 text-[11px] font-bold transition-colors ${
-                    activeChartMetric === "f1" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  F1
-                </button>
-              </div>
-            </div>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {modelCards.map((card) => (
+              <div
+                key={card.id}
+                className={`card-elevated p-6 space-y-4 flex flex-col justify-between relative overflow-hidden ${
+                  card.isPrimary
+                    ? "border-primary/40 bg-gradient-to-b from-primary/10 via-card to-card shadow-glow"
+                    : ""
+                }`}
+              >
+                {card.isPrimary && (
+                  <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-[10px] font-extrabold px-3 py-1 rounded-bl-xl shadow-sm">
+                    PRIMARY MODEL
+                  </div>
+                )}
 
-            <div className="h-[290px] w-full pt-2">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.15} vertical={false} />
-                  <XAxis dataKey="name" tick={{ fontSize: 11, fontWeight: 600 }} stroke="hsl(var(--muted-foreground))" />
-                  <YAxis domain={[70, 100]} tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "hsl(var(--card))",
-                      borderColor: "hsl(var(--border))",
-                      borderRadius: "1rem",
-                      boxShadow: "0 10px 25px -5px rgba(0,0,0,0.1)",
-                      fontSize: "12px",
-                      fontWeight: 600,
-                    }}
-                  />
-                  <Legend wrapperStyle={{ fontSize: "11px", paddingTop: "10px" }} />
-                  {(activeChartMetric === "all" || activeChartMetric === "accuracy") && (
-                    <Bar dataKey="Accuracy" fill="#3b82f6" radius={[6, 6, 0, 0]} name="Accuracy (%)" />
-                  )}
-                  {(activeChartMetric === "all" || activeChartMetric === "auc") && (
-                    <Bar dataKey="AUC" fill="#10b981" radius={[6, 6, 0, 0]} name="AUC-ROC (%)" />
-                  )}
-                  {(activeChartMetric === "all" || activeChartMetric === "f1") && (
-                    <Bar dataKey="F1" fill="#8b5cf6" radius={[6, 6, 0, 0]} name="F1-Score (%)" />
-                  )}
-                </BarChart>
-              </ResponsiveContainer>
+                <div className="space-y-3">
+                  <div>
+                    <Badge
+                      variant="outline"
+                      className={`text-[10px] font-bold ${
+                        card.isPrimary
+                          ? "bg-primary/10 text-primary border-primary/30"
+                          : "bg-muted/60 text-muted-foreground"
+                      }`}
+                    >
+                      {card.badge}
+                    </Badge>
+                    <h3 className="font-heading text-lg font-bold text-foreground mt-1">
+                      {card.name}
+                    </h3>
+                    <p className="text-xs text-muted-foreground">{card.type}</p>
+                  </div>
+
+                  {/* Top 3 Metric Pills */}
+                  <div className="grid grid-cols-3 gap-2 text-center pt-1">
+                    <div className="rounded-xl bg-background/60 p-2 border border-border/50">
+                      <div className="text-[10px] uppercase font-bold text-muted-foreground">Accuracy</div>
+                      <div className="font-heading text-base font-extrabold text-foreground">{card.accuracy}</div>
+                    </div>
+                    <div className="rounded-xl bg-background/60 p-2 border border-border/50">
+                      <div className="text-[10px] uppercase font-bold text-muted-foreground">AUC-ROC</div>
+                      <div className="font-heading text-base font-extrabold text-emerald-600 dark:text-emerald-400">{card.auc}</div>
+                    </div>
+                    <div className="rounded-xl bg-background/60 p-2 border border-border/50">
+                      <div className="text-[10px] uppercase font-bold text-muted-foreground">F1-Score</div>
+                      <div className="font-heading text-base font-extrabold text-primary">{card.f1}</div>
+                    </div>
+                  </div>
+
+                  {/* Metadata Specs */}
+                  <div className="space-y-1.5 text-xs text-muted-foreground pt-1 border-t border-border/60">
+                    <div className="flex justify-between">
+                      <span>Dataset:</span>
+                      <strong className="text-foreground text-[11px]">{card.dataset}</strong>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Explainability:</span>
+                      <strong className="text-foreground text-[11px]">{card.explainability}</strong>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Stability:</span>
+                      <strong className="text-foreground text-[11px]">{card.stability}</strong>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-border/50 text-[11px] text-muted-foreground">
+                  <p className="italic leading-relaxed">{card.highlight}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* CONCEPT 8: Global Insights Studio */}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between border-b border-border pb-3">
+            <div>
+              <h2 className="font-heading text-xl font-bold text-foreground flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary" /> Global Insights Studio
+              </h2>
+              <p className="text-xs text-muted-foreground">Cohort-level feature importance attributions and multidimensional performance.</p>
             </div>
           </div>
 
-          {/* Radar Chart (5 Cols) */}
-          <div className="lg:col-span-5 card-elevated p-6 sm:p-8 space-y-6 flex flex-col justify-between">
-            <div className="border-b border-border pb-4">
-              <h2 className="font-heading text-base font-bold text-foreground flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-amber-500" /> Multi-Dimensional Profile
-              </h2>
-              <p className="text-xs text-muted-foreground">XGBoost (Primary ★) vs. Random Forest & NN.</p>
+          {/* Global Feature Importance Waterfall / Ranking */}
+          <div className="card-elevated p-6 sm:p-8 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <h3 className="font-heading text-base font-bold text-foreground flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4 text-primary" /> Global Mean |SHAP| Feature Importance
+                </h3>
+                <p className="text-xs text-muted-foreground">Relative impact magnitude across the entire clinical training cohort.</p>
+              </div>
+              <Badge variant="outline" className="text-xs font-bold text-primary border-primary/30">
+                TreeExplainer Mean Absolute Attributions
+              </Badge>
             </div>
 
-            <div className="h-[290px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <RadarChart data={radarData}>
-                  <PolarGrid stroke="hsl(var(--border))" />
-                  <PolarAngleAxis dataKey="metric" tick={{ fontSize: 10, fontWeight: 700, fill: "hsl(var(--foreground))" }} />
-                  <PolarRadiusAxis domain={[75, 100]} stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 9 }} />
-                  <Radar name="XGBoost (Star)" dataKey="XGB" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.4} />
-                  <Radar name="Random Forest" dataKey="RF" stroke="#10b981" fill="#10b981" fillOpacity={0.25} />
-                  <Radar name="Neural Net" dataKey="NN" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.2} />
-                  <Legend wrapperStyle={{ fontSize: "11px" }} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "hsl(var(--card))",
-                      borderColor: "hsl(var(--border))",
-                      borderRadius: "0.75rem",
-                      fontSize: "11px",
-                    }}
-                  />
-                </RadarChart>
-              </ResponsiveContainer>
+            <div className="space-y-3 pt-2">
+              {globalImportance.map((item) => (
+                <div key={item.feature} className="space-y-1 p-3 rounded-xl bg-background/50 border border-border/60">
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2 font-bold text-foreground">
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-[10px] text-primary">
+                        #{item.rank}
+                      </span>
+                      <span>{item.feature}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-[11px] text-muted-foreground">{item.role}</span>
+                      <span className="font-mono font-bold text-primary">{item.score.toFixed(2)}</span>
+                    </div>
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-muted/60 overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{
+                        width: `${(item.score / 0.44) * 100}%`,
+                        backgroundColor: item.color,
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Charts Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {/* Multi-Metric Bar Chart (7 Cols) */}
+            <div className="lg:col-span-7 card-elevated p-6 sm:p-8 space-y-6 flex flex-col justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-4">
+                <div>
+                  <h3 className="font-heading text-base font-bold text-foreground flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5 text-primary" /> Holdout Test Multi-Metric Comparison (%)
+                  </h3>
+                  <p className="text-xs text-muted-foreground">Accuracy, AUC, and F1 across holdout test sets.</p>
+                </div>
+
+                <div className="flex items-center gap-1 bg-muted/40 p-1 rounded-xl border border-border">
+                  <button
+                    type="button"
+                    onClick={() => setActiveChartMetric("all")}
+                    className={`rounded-lg px-2.5 py-1 text-[11px] font-bold transition-colors ${
+                      activeChartMetric === "all" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    All
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveChartMetric("accuracy")}
+                    className={`rounded-lg px-2.5 py-1 text-[11px] font-bold transition-colors ${
+                      activeChartMetric === "accuracy" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Accuracy
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveChartMetric("auc")}
+                    className={`rounded-lg px-2.5 py-1 text-[11px] font-bold transition-colors ${
+                      activeChartMetric === "auc" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    AUC
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveChartMetric("f1")}
+                    className={`rounded-lg px-2.5 py-1 text-[11px] font-bold transition-colors ${
+                      activeChartMetric === "f1" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    F1
+                  </button>
+                </div>
+              </div>
+
+              <div className="h-[290px] w-full pt-2">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.15} vertical={false} />
+                    <XAxis dataKey="name" tick={{ fontSize: 11, fontWeight: 600 }} stroke="hsl(var(--muted-foreground))" />
+                    <YAxis domain={[70, 100]} tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "hsl(var(--card))",
+                        borderColor: "hsl(var(--border))",
+                        borderRadius: "1rem",
+                        boxShadow: "0 10px 25px -5px rgba(0,0,0,0.1)",
+                        fontSize: "12px",
+                        fontWeight: 600,
+                      }}
+                    />
+                    <Legend wrapperStyle={{ fontSize: "11px", paddingTop: "10px" }} />
+                    {(activeChartMetric === "all" || activeChartMetric === "accuracy") && (
+                      <Bar dataKey="Accuracy" fill="#3b82f6" radius={[6, 6, 0, 0]} name="Accuracy (%)" />
+                    )}
+                    {(activeChartMetric === "all" || activeChartMetric === "auc") && (
+                      <Bar dataKey="AUC" fill="#10b981" radius={[6, 6, 0, 0]} name="AUC-ROC (%)" />
+                    )}
+                    {(activeChartMetric === "all" || activeChartMetric === "f1") && (
+                      <Bar dataKey="F1" fill="#8b5cf6" radius={[6, 6, 0, 0]} name="F1-Score (%)" />
+                    )}
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Radar Chart (5 Cols) */}
+            <div className="lg:col-span-5 card-elevated p-6 sm:p-8 space-y-6 flex flex-col justify-between">
+              <div className="border-b border-border pb-4">
+                <h3 className="font-heading text-base font-bold text-foreground flex items-center gap-2">
+                  <Flame className="h-5 w-5 text-amber-500" /> Multi-Dimensional Balance
+                </h3>
+                <p className="text-xs text-muted-foreground">XGBoost (Primary ★) vs. Random Forest & NN.</p>
+              </div>
+
+              <div className="h-[290px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadarChart data={radarData}>
+                    <PolarGrid stroke="hsl(var(--border))" />
+                    <PolarAngleAxis dataKey="metric" tick={{ fontSize: 10, fontWeight: 700, fill: "hsl(var(--foreground))" }} />
+                    <PolarRadiusAxis domain={[75, 100]} stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 9 }} />
+                    <Radar name="XGBoost (Star)" dataKey="XGB" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.4} />
+                    <Radar name="Random Forest" dataKey="RF" stroke="#10b981" fill="#10b981" fillOpacity={0.25} />
+                    <Radar name="Neural Net" dataKey="NN" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.2} />
+                    <Legend wrapperStyle={{ fontSize: "11px" }} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "hsl(var(--card))",
+                        borderColor: "hsl(var(--border))",
+                        borderRadius: "0.75rem",
+                        fontSize: "11px",
+                      }}
+                    />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* CONCEPT 8: Dataset Limitations & Generalizability Notice Panel */}
+        <div className="rounded-3xl border border-amber-500/30 bg-amber-500/5 p-6 sm:p-8 space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+              <ShieldAlert className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="font-heading text-base font-bold text-foreground">
+                Dataset Limitations & Clinical Generalizability Panel
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                Critical academic and clinical boundaries for the underlying machine learning training corpus.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-3 text-xs text-muted-foreground leading-relaxed pt-2">
+            <div className="rounded-2xl bg-background/80 p-4 border border-border/60 space-y-1">
+              <strong className="text-foreground">Sample Size (N = 303):</strong>
+              <p>The models are benchmarked on 303 patient records from the classic UCI Cleveland dataset. While statistically robust for proof-of-concept CDSS, external multi-center validation is required before hospital deployment.</p>
+            </div>
+            <div className="rounded-2xl bg-background/80 p-4 border border-border/60 space-y-1">
+              <strong className="text-foreground">Demographic Distribution:</strong>
+              <p>Historical Cleveland data skews heavily towards male subjects (approx. 68%) aged 29–77. Performance may vary across underrepresented global demographic cohorts.</p>
+            </div>
+            <div className="rounded-2xl bg-background/80 p-4 border border-border/60 space-y-1">
+              <strong className="text-foreground">Clinical Validation Notice:</strong>
+              <p>Risk scores represent statistical probability distributions, not clinical diagnoses. They should assist, not replace, certified cardiovascular physician decision-making.</p>
             </div>
           </div>
         </div>
@@ -276,49 +563,6 @@ export default function ModelComparison() {
           </div>
         </div>
 
-        {/* Table 11: Cross-Validation Stability Analysis */}
-        <div className="card-elevated p-6 sm:p-8 space-y-4">
-          <div className="border-b border-border pb-4">
-            <h2 className="font-heading text-lg font-bold text-foreground flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5 text-emerald-500" /> Table 11: Cross-Validation Stability (5-Fold vs. 10-Fold)
-            </h2>
-            <p className="text-xs text-muted-foreground">Evaluating cross-validation stability and generalizability across splits.</p>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="border-b border-border bg-muted/30">
-                  <th className="py-3 px-4 font-bold text-foreground">Model Architecture</th>
-                  <th className="py-3 px-4 font-bold text-foreground text-center">5-Fold CV Accuracy</th>
-                  <th className="py-3 px-4 font-bold text-foreground text-center">10-Fold CV Accuracy</th>
-                  <th className="py-3 px-4 font-bold text-foreground">Stability Assessment</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/60">
-                {modelsList.map((m) => (
-                  <tr key={m.model} className="hover:bg-muted/25 transition-colors">
-                    <td className="py-3.5 px-4 font-bold text-foreground">{m.model}</td>
-                    <td className="py-3.5 px-4 text-center font-semibold text-primary">{m.cv5}</td>
-                    <td className="py-3.5 px-4 text-center font-semibold text-foreground">{m.cv10}</td>
-                    <td className="py-3.5 px-4 text-muted-foreground">
-                      {m.model.includes("XGBoost")
-                        ? "Excellent generalization, lowest variance"
-                        : m.model.includes("Random Forest")
-                        ? "Well-generalized, consistent performance"
-                        : m.model.includes("Neural")
-                        ? "Acceptable, slightly higher variance on small datasets"
-                        : m.model.includes("SVM")
-                        ? "Consistent across both schemes"
-                        : "Stable baseline, low variance"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
         {/* Table 12: Comparison with State-of-the-Art Methods */}
         <div className="card-elevated p-6 sm:p-8 space-y-4">
           <div className="border-b border-border pb-4">
@@ -358,6 +602,9 @@ export default function ModelComparison() {
             </table>
           </div>
         </div>
+
+        {/* Persistent Trust & Safety Banner */}
+        <TrustSafetyBanner />
       </div>
     </main>
   );
