@@ -3,7 +3,12 @@ import tailwindcssAnimate from "tailwindcss-animate";
 
 export default {
   darkMode: ["class"],
-  content: ["./pages/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./app/**/*.{ts,tsx}", "./src/**/*.{ts,tsx}"],
+  content: [
+    "./pages/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+    "./app/**/*.{ts,tsx}",
+    "./src/**/*.{ts,tsx}",
+  ],
   prefix: "",
   theme: {
     container: {
@@ -14,6 +19,12 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ['"DM Sans"', "system-ui", "-apple-system", "sans-serif"],
+        display: ['"Manrope"', "system-ui", "-apple-system", "sans-serif"],
+        heading: ['"Manrope"', "system-ui", "-apple-system", "sans-serif"],
+        mono: ['"JetBrains Mono"', "monospace"],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -65,31 +76,50 @@ export default {
         },
       },
       borderRadius: {
+        "3xl": "1.5rem",
+        "2xl": "1rem",
+        xl: "0.75rem",
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      boxShadow: {
+        glass: "0 8px 32px 0 rgba(0, 0, 0, 0.08)",
+        "glass-dark": "0 8px 32px 0 rgba(0, 0, 0, 0.37)",
+        glow: "0 0 25px -5px rgba(59, 130, 246, 0.4)",
+        "glow-lg": "0 0 45px -10px rgba(59, 130, 246, 0.5)",
+        "glow-emerald": "0 0 30px -5px rgba(16, 185, 129, 0.4)",
+        "glow-amber": "0 0 30px -5px rgba(245, 158, 11, 0.4)",
+        "glow-red": "0 0 30px -5px rgba(239, 68, 68, 0.4)",
+      },
       keyframes: {
         "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
+        },
+        "pulse-subtle": {
+          "0%, 100%": { opacity: "1", transform: "scale(1)" },
+          "50%": { opacity: "0.85", transform: "scale(1.02)" },
+        },
+        float: {
+          "0%, 100%": { transform: "translateY(0px)" },
+          "50%": { transform: "translateY(-8px)" },
+        },
+        shimmer: {
+          "0%": { backgroundPosition: "-200% 0" },
+          "100%": { backgroundPosition: "200% 0" },
         },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "pulse-subtle": "pulse-subtle 4s ease-in-out infinite",
+        float: "float 6s ease-in-out infinite",
+        shimmer: "shimmer 3s linear infinite",
       },
     },
   },

@@ -48,26 +48,26 @@ export default function ModelComparison() {
   ];
 
   return (
-    <main className="min-h-screen bg-background px-4 py-12 sm:px-6 lg:px-8" id="main-content">
+    <main className="min-h-screen bg-background bg-aurora-mesh bg-grid-texture px-4 py-12 sm:px-6 lg:px-8" id="main-content">
       <div className="mx-auto max-w-7xl space-y-12">
         {/* Header */}
-        <div className="text-center max-w-3xl mx-auto">
-          <Badge variant="outline" className="mb-3 border-primary/30 bg-primary/5 text-primary text-xs font-semibold uppercase tracking-wider">
+        <div className="text-center max-w-3xl mx-auto space-y-3">
+          <Badge variant="outline" className="border-primary/30 bg-primary/5 text-primary text-xs font-bold uppercase tracking-wider">
             Layer 3 Evaluation
           </Badge>
-          <h1 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-5xl">
+          <h1 className="font-heading text-3xl font-extrabold tracking-tight text-foreground sm:text-5xl">
             Machine Learning Model Comparison
           </h1>
-          <p className="mt-4 text-sm sm:text-base text-muted-foreground leading-relaxed">
+          <p className="text-xs sm:text-base text-muted-foreground leading-relaxed">
             Rigorous empirical evaluation of 5 machine learning architectures across 25% holdout test sets, 5-fold and 10-fold stratified cross-validation on the UCI Cleveland Dataset.
           </p>
         </div>
 
         {/* Table 10: Test Set Performance Results (All Models) */}
-        <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-sm overflow-hidden space-y-4">
+        <div className="card-elevated p-6 sm:p-8 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-4">
             <div>
-              <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+              <h2 className="font-heading text-lg font-bold text-foreground flex items-center gap-2">
                 <Trophy className="h-5 w-5 text-amber-500" /> Table 10: Test Set Performance Results (All Models)
               </h2>
               <p className="text-xs text-muted-foreground">Evaluated on the 25% stratified holdout test set.</p>
@@ -165,28 +165,28 @@ export default function ModelComparison() {
           </div>
         </div>
 
-        {/* Table 11: Cross-Validation Results (5-Fold and 10-Fold) */}
-        <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-sm overflow-hidden space-y-4">
+        {/* Table 11: Cross-Validation Stability Analysis */}
+        <div className="card-elevated p-6 sm:p-8 space-y-4">
           <div className="border-b border-border pb-4">
-            <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-              <Layers className="h-5 w-5 text-primary" /> Table 11: Cross-Validation Results (5-Fold and 10-Fold)
+            <h2 className="font-heading text-lg font-bold text-foreground flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-emerald-500" /> Table 11: Cross-Validation Stability (5-Fold vs. 10-Fold)
             </h2>
-            <p className="text-xs text-muted-foreground">Generalization stability and variance verification across multiple sampling schemes.</p>
+            <p className="text-xs text-muted-foreground">Evaluating cross-validation stability and generalizability across splits.</p>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
                 <tr className="border-b border-border bg-muted/30">
-                  <th className="py-3 px-4 font-bold text-foreground">Model</th>
-                  <th className="py-3 px-4 font-bold text-foreground text-center">5-Fold CV Accuracy (Mean ± SD)</th>
-                  <th className="py-3 px-4 font-bold text-foreground text-center">10-Fold CV Accuracy (Mean ± SD)</th>
+                  <th className="py-3 px-4 font-bold text-foreground">Model Architecture</th>
+                  <th className="py-3 px-4 font-bold text-foreground text-center">5-Fold CV Accuracy</th>
+                  <th className="py-3 px-4 font-bold text-foreground text-center">10-Fold CV Accuracy</th>
                   <th className="py-3 px-4 font-bold text-foreground">Stability Assessment</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/60">
                 {modelsList.map((m) => (
-                  <tr key={m.model} className="hover:bg-muted/20 transition-colors">
+                  <tr key={m.model} className="hover:bg-muted/25 transition-colors">
                     <td className="py-3.5 px-4 font-bold text-foreground">{m.model}</td>
                     <td className="py-3.5 px-4 text-center font-semibold text-primary">{m.cv5}</td>
                     <td className="py-3.5 px-4 text-center font-semibold text-foreground">{m.cv10}</td>
@@ -209,9 +209,9 @@ export default function ModelComparison() {
         </div>
 
         {/* Table 12: Comparison with State-of-the-Art Methods */}
-        <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-sm overflow-hidden space-y-4">
+        <div className="card-elevated p-6 sm:p-8 space-y-4">
           <div className="border-b border-border pb-4">
-            <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+            <h2 className="font-heading text-lg font-bold text-foreground flex items-center gap-2">
               <BookOpen className="h-5 w-5 text-purple-500" /> Table 12: Comparison with State-of-the-Art Methods
             </h2>
             <p className="text-xs text-muted-foreground">Benchmarking AI-HealthGuard against published peer-reviewed studies (2022–2025).</p>

@@ -320,18 +320,18 @@ export default function Results() {
   // Loading State
   if (isLoading) {
     return (
-      <main className="min-h-[80vh] flex flex-col items-center justify-center px-4 text-center" id="main-content">
+      <main className="min-h-screen bg-background bg-aurora-mesh bg-grid-texture flex flex-col items-center justify-center px-4 text-center" id="main-content">
         <div className="relative mb-6">
-          <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center animate-ping absolute inset-0 opacity-75"></div>
-          <div className="h-20 w-20 rounded-full bg-primary/20 flex items-center justify-center relative shadow-md">
+          <div className="h-20 w-20 rounded-full bg-primary/15 flex items-center justify-center animate-ping absolute inset-0 opacity-75"></div>
+          <div className="h-20 w-20 rounded-2xl bg-card/80 border border-primary/30 flex items-center justify-center relative shadow-glow">
             <Heart className="h-10 w-10 text-primary animate-pulse" />
           </div>
         </div>
-        <h2 className="text-2xl font-bold text-foreground">Running Inference & SHAP Analysis</h2>
-        <p className="mt-2 text-sm text-muted-foreground max-w-md">
+        <h2 className="font-heading text-2xl font-extrabold text-foreground">Running Inference & SHAP Analysis</h2>
+        <p className="mt-2 text-xs sm:text-sm text-muted-foreground max-w-md leading-relaxed">
           Preprocessing clinical biomarkers, evaluating primary XGBoost model, and computing local game-theoretic feature attributions...
         </p>
-        <div className="mt-6 flex items-center gap-2 text-xs font-semibold text-primary">
+        <div className="mt-6 flex items-center gap-2 text-xs font-bold text-primary">
           <RefreshCw className="h-4 w-4 animate-spin" /> Processing Session {sessionId}
         </div>
       </main>
@@ -341,19 +341,19 @@ export default function Results() {
   // Error State - No Fake Data Fallback
   if (isError || !apiData) {
     return (
-      <main className="min-h-[80vh] flex flex-col items-center justify-center px-4 text-center" id="main-content">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-destructive/10 text-destructive shadow-sm">
+      <main className="min-h-screen bg-background bg-aurora-mesh bg-grid-texture flex flex-col items-center justify-center px-4 text-center" id="main-content">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-destructive/10 border border-destructive/20 text-destructive shadow-sm">
           <AlertTriangle className="h-8 w-8" />
         </div>
-        <h2 className="text-2xl font-bold text-foreground">Inference Request Failed</h2>
-        <p className="mt-2 text-sm text-muted-foreground max-w-lg">
+        <h2 className="font-heading text-2xl font-extrabold text-foreground">Inference Request Failed</h2>
+        <p className="mt-2 text-xs sm:text-sm text-muted-foreground max-w-lg leading-relaxed">
           {error?.message || "The inference service could not calculate a risk score for the submitted parameters. Synthetic fallback is disabled."}
         </p>
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-          <Button onClick={() => refetch()} variant="outline" className="rounded-xl font-semibold gap-2">
+          <Button onClick={() => refetch()} variant="outline" className="rounded-xl font-bold gap-2">
             <RefreshCw className="h-4 w-4" /> Retry Inference
           </Button>
-          <Button onClick={() => navigate("/assess", { state: { formData: patientData } })} className="rounded-xl font-semibold gap-2">
+          <Button onClick={() => navigate("/assess", { state: { formData: patientData } })} className="btn-cta-glow rounded-xl font-bold gap-2">
             <ArrowLeft className="h-4 w-4" /> Edit Parameters
           </Button>
         </div>
@@ -362,7 +362,7 @@ export default function Results() {
   }
 
   return (
-    <main className="min-h-screen bg-background px-4 py-10 sm:px-6 lg:px-8" id="main-content">
+    <main className="min-h-screen bg-background bg-aurora-mesh bg-grid-texture px-4 py-10 sm:px-6 lg:px-8" id="main-content">
       <div className="mx-auto max-w-6xl space-y-8">
         {/* Header Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-6">

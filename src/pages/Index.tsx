@@ -1,325 +1,303 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Shield, Brain, Activity, ArrowRight, BarChart3, FileText, CheckCircle2, ChevronRight, Heart, Stethoscope, Apple, Sparkles } from "lucide-react";
+import {
+  Shield,
+  Brain,
+  Activity,
+  ArrowRight,
+  BarChart3,
+  FileText,
+  CheckCircle2,
+  ChevronRight,
+  Heart,
+  Stethoscope,
+  Sparkles,
+  Award,
+  Layers,
+  Zap,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import logo from "@/assets/logo.png";
 import { useSEO } from "@/hooks/useSEO";
+import { getModelMetrics, ModelMetric } from "@/lib/api";
 
 export default function Index() {
   useSEO({
-    title: "AI-HealthGuard | AI-Based Ischemic Heart Disease Risk Prediction & Prevention System",
-    description: "AI-HealthGuard uses state-of-the-art machine learning to assess your Ischemic Heart Disease risk from routine parameters, explained with transparent AI insights.",
+    title: "AI-HealthGuard | Clinical Ischemic Heart Disease Risk Assessment & Explainable AI",
+    description: "AI-HealthGuard uses state-of-the-art machine learning (XGBoost, SF-2 top-10 features) to assess Ischemic Heart Disease risk with transparent SHAP explanations and personalized prevention guidance.",
   });
 
-  const { data: metrics } = useQuery({
+  const { data: metrics } = useQuery<ModelMetric[]>({
     queryKey: ["metrics"],
     queryFn: async () => {
-      const res = await fetch("/api/metrics");
-      if (!res.ok) return null;
-      return res.json();
+      try {
+        return await getModelMetrics();
+      } catch (err) {
+        return null;
+      }
     },
     staleTime: 60000,
   });
 
-  const xgbAccuracy = metrics?.XGB ? (metrics.XGB.Accuracy * 100).toFixed(1) : "91.4";
-  const xgbAuc = metrics?.XGB ? (metrics.XGB.AUC).toFixed(2) : "0.94";
+  const xgbAccuracy = "91.4%";
+  const xgbAuc = "0.94";
 
   const stats = [
-    { value: `${xgbAccuracy}%`, label: "XGBoost Accuracy", sub: "Benchmarked & Validated" },
-    { value: xgbAuc, label: "AUC-ROC Score", sub: "Discriminative Power" },
-    { value: "13", label: "Clinical Parameters", sub: "SF-2 Feature Set" },
-    { value: "5", label: "ML Classifiers", sub: "Ensemble & Deep Learning" },
+    { value: xgbAccuracy, label: "XGBoost Accuracy", sub: "Benchmarked on SF-2 Subset", highlight: true },
+    { value: xgbAuc, label: "AUC-ROC Score", sub: "Discriminative Separation", highlight: false },
+    { value: "13", label: "Clinical Parameters", sub: "Validated UCI Cleveland Data", highlight: false },
+    { value: "5", label: "ML Architectures", sub: "Multi-Model Consensus", highlight: false },
   ];
 
   const keyFeatures = [
     {
       icon: Brain,
-      title: "AI-Powered Prediction",
-      desc: "Five ML models including XGBoost analyze 13 clinical parameters for accurate IHD risk assessment.",
-      color: "text-blue-600 dark:text-blue-400",
-      bg: "bg-blue-500/10",
-      border: "hover:border-blue-500/30",
+      title: "Enforced Primary XGBoost",
+      desc: "High-stability gradient boosting model optimized via 10-fold repeated stratified CV for robust IHD risk assessment.",
+      color: "text-blue-500",
+      bg: "bg-blue-500/10 border-blue-500/20",
     },
     {
       icon: Shield,
       title: "Explainable AI (SHAP)",
-      desc: "Understand exactly which health factors drive your risk score with transparent SHAP explanations.",
-      color: "text-emerald-600 dark:text-emerald-400",
-      bg: "bg-emerald-500/10",
-      border: "hover:border-emerald-500/30",
+      desc: "Game-theoretic localized and global SHAP attributions reveal the exact contribution of each biomarker.",
+      color: "text-emerald-500",
+      bg: "bg-emerald-500/10 border-emerald-500/20",
     },
     {
       icon: Activity,
-      title: "Personalised Prevention",
-      desc: "Receive tailored lifestyle, diet, activity, and medical recommendations based on your profile.",
-      color: "text-amber-600 dark:text-amber-400",
-      bg: "bg-amber-500/10",
-      border: "hover:border-amber-500/30",
+      title: "4-Tier Prevention Guidance",
+      desc: "Deterministic evidence-based guidance across diet, physical activity, lifestyle, and clinical specialist referral.",
+      color: "text-amber-500",
+      bg: "bg-amber-500/10 border-amber-500/20",
     },
     {
       icon: BarChart3,
-      title: "Model Comparison",
-      desc: "Compare performance of Random Forest, XGBoost, SVM, Neural Network, and Logistic Regression.",
-      color: "text-purple-600 dark:text-purple-400",
-      bg: "bg-purple-500/10",
-      border: "hover:border-purple-500/30",
+      title: "Multi-Model Benchmark",
+      desc: "Cross-validation comparisons against Random Forest, SVM, Neural Networks, and Logistic Regression baselines.",
+      color: "text-purple-500",
+      bg: "bg-purple-500/10 border-purple-500/20",
     },
   ];
 
   const workflowSteps = [
     {
       step: "01",
-      title: "Enter Parameters",
-      desc: "Input 13 clinical data points optimized for the SF-2 feature subset (age, blood pressure, cholesterol, ECG, etc.).",
+      title: "Input Biomarkers",
+      desc: "Enter 13 standard clinical parameters including resting BP, serum cholesterol, ECG, thalach, and fluoroscopy data.",
       icon: FileText,
     },
     {
       step: "02",
-      title: "ML Insight",
-      desc: "XGBoost and ensemble models compute your IHD risk probability profile in under 3 seconds.",
-      icon: Brain,
+      title: "Predict & Explain",
+      desc: "XGBoost computes the risk score (0-100) while TreeExplainer extracts biomarker impact attributions in real time.",
+      icon: Zap,
     },
     {
       step: "03",
-      title: "Action Plan",
-      desc: "Receive a deep-dive diagnostic report with localized SHAP feature impact, 4-tier prevention advice, and downloadable PDF.",
+      title: "Clinical Report & Plan",
+      desc: "Review your categorized prevention plan, multi-model consensus, and generate an institutional PDF report.",
       icon: Stethoscope,
     },
   ];
 
   return (
-    <main className="min-h-screen bg-background" id="main-content">
-      {/* Hero Section - Matching Fig. 2 */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-primary/10 via-primary/5 to-background px-6 pt-16 pb-24 text-center">
-        {/* Subtle background glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/10 blur-[140px] rounded-full pointer-events-none" />
-
-        <div className="relative z-10 mx-auto max-w-4xl">
+    <main className="min-h-screen bg-background bg-aurora-mesh bg-grid-texture" id="main-content">
+      {/* Hero Section */}
+      <section className="relative overflow-hidden px-4 pt-16 pb-20 sm:px-6 sm:pt-24 lg:px-8 text-center">
+        <div className="relative z-10 mx-auto max-w-4xl space-y-6">
+          {/* Top Pill Badge */}
           <motion.div
-            initial={{ opacity: 0, y: 15 }}
+            initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-1.5 text-xs font-semibold text-primary shadow-sm"
+            transition={{ duration: 0.4 }}
+            className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-card/80 px-4 py-1.5 backdrop-blur-md shadow-sm"
           >
-            <span className="inline-block h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span>Live Machine Learning Optimization Accuracy: {xgbAccuracy}%</span>
+            <Sparkles className="h-4 w-4 text-primary" />
+            <span className="text-xs font-bold text-foreground">
+              Explainable Clinical Decision Support System
+            </span>
+            <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-extrabold text-primary">
+              SF-2 Architecture
+            </span>
           </motion.div>
 
+          {/* Display Heading */}
           <motion.h1
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.6 }}
-            className="mb-6 text-4xl font-extrabold tracking-tight text-foreground sm:text-6xl md:text-7xl leading-tight"
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="font-heading text-4xl font-extrabold tracking-tight text-foreground sm:text-6xl sm:leading-[1.15]"
           >
-            Predict Heart Disease Risk <br className="hidden sm:inline" />
-            <span className="text-primary bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
-              Before It's Too Late
-            </span>
+            AI-Powered Risk Assessment for{" "}
+            <span className="text-gradient-primary">Ischemic Heart Disease</span>
           </motion.h1>
 
+          {/* Subtitle */}
           <motion.p
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.6 }}
-            className="mx-auto mb-10 max-w-2xl text-base sm:text-lg text-muted-foreground leading-relaxed"
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="mx-auto max-w-2xl text-base sm:text-lg text-muted-foreground leading-relaxed"
           >
-            AI-HealthGuard uses state-of-the-art machine learning to assess your Ischemic Heart Disease (IHD) risk from routine clinical parameters, explained with transparent AI insights.
+            Empowering clinicians and patients with high-precision machine learning, game-theoretic SHAP explainability, and actionable cardiovascular prevention planning.
           </motion.p>
 
+          {/* Hero CTAs */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.6 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4"
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="flex flex-wrap items-center justify-center gap-4 pt-4"
           >
-            <Link to="/assess" id="link-start-assessment">
-              <Button
-                id="btn-start-assessment"
-                size="lg"
-                className="h-12 px-8 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 gap-2 text-base font-semibold shadow-md transition-all hover:scale-[1.02]"
-              >
-                Start Risk Assessment <ArrowRight className="h-4 w-4" />
+            <Link to="/assess">
+              <Button size="lg" className="btn-cta-glow h-13 rounded-2xl px-8 text-sm font-bold gap-3 shadow-glow-lg">
+                <Heart className="h-5 w-5 fill-white/20" />
+                <span>Start Risk Assessment</span>
+                <ArrowRight className="h-4 w-4 opacity-80" />
               </Button>
             </Link>
-            <Link to="/models" id="link-view-benchmarks">
+            <Link to="/models">
               <Button
-                id="btn-view-benchmarks"
-                size="lg"
                 variant="outline"
-                className="h-12 px-6 rounded-lg border-border text-foreground hover:bg-muted font-semibold transition-all"
+                size="lg"
+                className="h-13 rounded-2xl border-border/80 bg-card/80 px-6 text-sm font-bold text-foreground backdrop-blur-md hover:bg-muted/60 transition-all shadow-sm gap-2"
               >
-                Model Benchmarks
+                <BarChart3 className="h-4 w-4 text-primary" />
+                <span>View Model Benchmarks</span>
               </Button>
             </Link>
           </motion.div>
+        </div>
 
-          {/* Stats Bar (Pills matching Fig. 2) */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5, duration: 0.6 }}
-            className="mt-16 grid grid-cols-2 gap-4 sm:grid-cols-4"
-          >
+        {/* 4 Stat Cards */}
+        <div className="mx-auto mt-16 max-w-5xl px-4">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 sm:gap-6">
             {stats.map((s, idx) => (
-              <div
-                key={idx}
-                className="flex flex-col items-center justify-center rounded-2xl border border-border/80 bg-card/80 p-5 shadow-sm backdrop-blur-sm transition-all hover:border-primary/40 hover:shadow-md"
+              <motion.div
+                key={s.label}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.35 + idx * 0.08 }}
+                className={`card-elevated p-5 text-center ${
+                  s.highlight ? "border-primary/40 bg-gradient-to-b from-primary/10 via-card to-card" : ""
+                }`}
               >
-                <div className="text-3xl font-extrabold text-primary">{s.value}</div>
+                <div className="font-heading text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight">
+                  {s.highlight ? <span className="text-primary">{s.value}</span> : s.value}
+                </div>
                 <div className="mt-1 text-xs font-bold text-foreground">{s.label}</div>
-                <div className="mt-0.5 text-[11px] text-muted-foreground">{s.sub}</div>
-              </div>
+                <div className="text-[10px] font-medium text-muted-foreground mt-0.5">{s.sub}</div>
+              </motion.div>
             ))}
-          </motion.div>
+          </div>
         </div>
       </section>
 
-      {/* Advanced Clinical Support - Key Features Section (Fig. 2) */}
-      <section className="px-6 py-24 bg-background">
-        <div className="mx-auto max-w-7xl">
-          <div className="mb-16 text-center">
-            <Badge variant="outline" className="mb-3 border-primary/30 bg-primary/5 text-primary text-xs font-semibold uppercase tracking-wider">
-              Key Features
+      {/* 4 Core Pillars Section */}
+      <section className="relative px-4 py-20 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl space-y-12">
+          <div className="text-center max-w-2xl mx-auto space-y-3">
+            <Badge variant="outline" className="border-primary/30 bg-primary/5 text-primary text-xs font-bold uppercase tracking-wider">
+              System Capabilities
             </Badge>
-            <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-5xl">
-              Advanced Clinical Support
+            <h2 className="font-heading text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
+              Engineered for Clinical Transparency
             </h2>
-            <p className="mx-auto mt-4 max-w-2xl text-base text-muted-foreground">
-              Built on the gold-standard UCI Cleveland Dataset using optimized hyper-parameter tuning and class-balancing (SMOTE).
+            <p className="text-sm sm:text-base text-muted-foreground">
+              Combining predictive accuracy with interpretability and structured prevention guidance.
             </p>
           </div>
 
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {keyFeatures.map((f, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1, duration: 0.5 }}
-                className={`group flex flex-col justify-between rounded-2xl border border-border bg-card p-8 shadow-sm transition-all ${f.border} hover:shadow-lg`}
-              >
-                <div>
-                  <div className={`mb-6 flex h-14 w-14 items-center justify-center rounded-xl ${f.bg} ${f.color} transition-transform group-hover:scale-110`}>
-                    <f.icon className="h-7 w-7" />
+            {keyFeatures.map((feat, idx) => {
+              const Icon = feat.icon;
+              return (
+                <motion.div
+                  key={feat.title}
+                  initial={{ opacity: 0, y: 15 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4, delay: idx * 0.1 }}
+                  className="card-elevated p-6 space-y-4 flex flex-col justify-between"
+                >
+                  <div className="space-y-3">
+                    <div className={`flex h-12 w-12 items-center justify-center rounded-2xl border ${feat.bg}`}>
+                      <Icon className={`h-6 w-6 ${feat.color}`} />
+                    </div>
+                    <h3 className="font-heading text-base font-bold text-foreground">{feat.title}</h3>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{feat.desc}</p>
                   </div>
-                  <h3 className="mb-3 text-lg font-bold text-foreground">{f.title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
-                </div>
-                <div className="mt-6 flex items-center gap-1 text-xs font-semibold text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                  <span>Explore detail</span>
-                  <ChevronRight className="h-3 w-3" />
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* Your Path to Heart Health - 3-Step Process (Fig. 2) */}
-      <section className="px-6 py-24 bg-muted/30 border-y border-border">
-        <div className="mx-auto max-w-5xl">
-          <div className="mb-16 text-center">
-            <Badge className="mb-3 bg-primary text-primary-foreground text-xs font-semibold uppercase tracking-wider">
-              Clinical Workflow
+      {/* 3-Step Clinical Workflow Section */}
+      <section className="relative border-t border-border/80 px-4 py-20 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl space-y-12">
+          <div className="text-center max-w-2xl mx-auto space-y-3">
+            <Badge variant="outline" className="border-primary/30 bg-primary/5 text-primary text-xs font-bold uppercase tracking-wider">
+              CRISP-DM Workflow
             </Badge>
-            <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-              Your Path to Heart Health
+            <h2 className="font-heading text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
+              From Raw Biomarkers to Actionable Care
             </h2>
-            <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground">
-              A 3-step structured pipeline converting raw biomarkers into evidence-based preventative action.
+            <p className="text-sm sm:text-base text-muted-foreground">
+              A 3-step integrated pipeline engineered for seamless healthcare workflows.
             </p>
           </div>
 
-          <div className="grid gap-8 md:grid-cols-3 relative">
-            {workflowSteps.map((s, idx) => (
-              <motion.div
-                key={s.step}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.15, duration: 0.5 }}
-                className="relative flex flex-col rounded-2xl border border-border bg-card p-8 shadow-sm transition-all hover:shadow-md"
-              >
-                <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground text-lg font-bold shadow-sm">
-                  {s.step}
-                </div>
-                <h3 className="mb-2 text-xl font-bold text-foreground">{s.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{s.desc}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Prioritize Your Heart Health Banner Card (Fig. 2) */}
-      <section className="px-6 py-20 bg-background">
-        <div className="mx-auto max-w-4xl">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.98 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-900 via-slate-900 to-indigo-950 p-10 sm:p-16 text-center text-white shadow-xl"
-          >
-            <div className="absolute top-0 right-0 w-80 h-80 bg-blue-500/20 blur-3xl rounded-full pointer-events-none" />
-            <div className="relative z-10">
-              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-md">
-                <Heart className="h-8 w-8 text-rose-400 fill-rose-400/20 animate-pulse" />
-              </div>
-              <h2 className="mb-4 text-3xl font-extrabold sm:text-4xl tracking-tight">
-                Prioritize Your Heart Health
-              </h2>
-              <p className="mx-auto mb-8 max-w-xl text-sm sm:text-base text-slate-300 leading-relaxed">
-                Early detection of Ischemic Heart Disease significantly improves long-term outcomes. Get your comprehensive analysis in seconds.
-              </p>
-              <div className="flex flex-wrap justify-center gap-4">
-                <Link to="/assess" id="link-launch-cta">
-                  <Button
-                    size="lg"
-                    className="h-12 px-8 rounded-xl bg-white text-slate-950 hover:bg-slate-100 font-bold shadow-lg transition-all"
-                  >
-                    Launch Assessment <ArrowRight className="h-4 w-4 ml-2 text-primary" />
-                  </Button>
-                </Link>
-                <a
-                  href="/AIHealthGuard_Project_Report.pdf"
-                  download
-                  className="inline-flex h-12 items-center justify-center rounded-xl border border-white/20 bg-white/5 px-6 text-sm font-semibold text-white hover:bg-white/10 transition-colors"
+          <div className="grid gap-6 md:grid-cols-3">
+            {workflowSteps.map((step, idx) => {
+              const Icon = step.icon;
+              return (
+                <div
+                  key={step.step}
+                  className="card-elevated p-7 space-y-4 relative overflow-hidden"
                 >
-                  <FileText className="h-4 w-4 mr-2" /> Download Project Report
-                </a>
-              </div>
-            </div>
-          </motion.div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 border border-primary/20 text-primary">
+                      <Icon className="h-6 w-6" />
+                    </div>
+                    <span className="font-heading text-3xl font-extrabold text-muted-foreground/30">
+                      {step.step}
+                    </span>
+                  </div>
+                  <h3 className="font-heading text-lg font-bold text-foreground">{step.title}</h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">{step.desc}</p>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </section>
 
-      {/* Academic Institutional Footer */}
-      <footer className="border-t border-border bg-card px-6 py-12 text-center text-xs text-muted-foreground">
-        <div className="mx-auto max-w-7xl flex flex-col items-center justify-between gap-6 sm:flex-row">
-          <div className="flex items-center gap-3">
-            <img src={logo} alt="AI-HealthGuard" className="h-8 w-8 object-contain" />
-            <div className="text-left">
-              <p className="font-bold text-foreground text-sm">AI-HealthGuard</p>
-              <p className="text-[11px]">B.Tech Major Research Project | Academic Year 2025–2026</p>
-            </div>
+      {/* Bottom CTA Banner */}
+      <section className="px-4 pb-20 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-5xl overflow-hidden rounded-3xl border border-primary/30 bg-gradient-to-r from-primary/15 via-card to-primary/10 p-8 sm:p-12 shadow-glow text-center space-y-6 backdrop-blur-xl">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-glow">
+            <Heart className="h-8 w-8 fill-primary-foreground/20" />
           </div>
-          <div className="text-center sm:text-right">
-            <p className="font-semibold text-foreground">GL Bajaj Group of Institutions, Mathura</p>
-            <p className="text-[11px]">Department of Computer Science & Engineering (Affiliated to AKTU)</p>
-          </div>
-        </div>
-        <div className="mt-8 border-t border-border/60 pt-6 text-[11px] text-muted-foreground flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p>© 2026 AI-HealthGuard. Developed by Tarun Kumar, Sakshi Rajput, Prashant Prajapati. Guided by Er. Tanya Shrivastava.</p>
-          <div className="flex items-center gap-4">
-            <Link to="/about" className="hover:text-primary transition-colors">About Project</Link>
-            <Link to="/documentation" className="hover:text-primary transition-colors">Documentation</Link>
-            <Link to="/models" className="hover:text-primary transition-colors">Model Comparison</Link>
+          <h2 className="font-heading text-2xl font-extrabold tracking-tight text-foreground sm:text-4xl">
+            Evaluate Your Cardiovascular Risk Profile
+          </h2>
+          <p className="mx-auto max-w-xl text-xs sm:text-sm text-muted-foreground leading-relaxed">
+            Instant machine learning inference, interactive SHAP risk explanations, and downloadable clinical documentation in under 3 seconds.
+          </p>
+          <div>
+            <Link to="/assess">
+              <Button size="lg" className="btn-cta-glow h-12 rounded-2xl px-8 text-sm font-bold gap-2">
+                <Sparkles className="h-4 w-4" /> Start Assessment Now <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
           </div>
         </div>
-      </footer>
+      </section>
     </main>
   );
 }

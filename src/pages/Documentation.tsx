@@ -47,17 +47,17 @@ export default function Documentation() {
   ];
 
   return (
-    <main className="min-h-screen bg-background px-4 py-12 sm:px-6 lg:px-8" id="main-content">
+    <main className="min-h-screen bg-background bg-aurora-mesh bg-grid-texture px-4 py-12 sm:px-6 lg:px-8" id="main-content">
       <div className="mx-auto max-w-7xl space-y-12">
         {/* Header */}
-        <div className="text-center max-w-3xl mx-auto">
-          <Badge variant="outline" className="mb-3 border-primary/30 bg-primary/5 text-primary text-xs font-semibold uppercase tracking-wider">
+        <div className="text-center max-w-3xl mx-auto space-y-3">
+          <Badge variant="outline" className="border-primary/30 bg-primary/5 text-primary text-xs font-bold uppercase tracking-wider">
             Technical Specification & Archive
           </Badge>
-          <h1 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-5xl">
+          <h1 className="font-heading text-3xl font-extrabold tracking-tight text-foreground sm:text-5xl">
             Project Documentation
           </h1>
-          <p className="mt-3 text-sm sm:text-base text-muted-foreground leading-relaxed">
+          <p className="text-xs sm:text-base text-muted-foreground leading-relaxed">
             Architectural specifications, ML pipeline reproduction guidelines, and official B.Tech project artifacts for AI-HealthGuard.
           </p>
         </div>
@@ -67,31 +67,31 @@ export default function Documentation() {
           {documents.map((doc) => (
             <div
               key={doc.title}
-              className={`rounded-3xl border bg-card p-6 shadow-sm flex flex-col justify-between transition-all hover:shadow-md ${
-                doc.primary ? "border-primary/40 bg-primary/5" : "border-border"
+              className={`card-elevated p-6 flex flex-col justify-between ${
+                doc.primary ? "border-primary/40 bg-gradient-to-b from-primary/10 via-card to-card" : ""
               }`}
             >
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${doc.primary ? "bg-primary text-primary-foreground shadow-md" : "bg-muted text-foreground"}`}>
+                  <div className={`flex h-12 w-12 items-center justify-center rounded-2xl border ${doc.primary ? "bg-primary text-primary-foreground border-primary/30 shadow-glow" : "bg-muted text-foreground border-border"}`}>
                     <doc.icon className="h-6 w-6" />
                   </div>
                   <Badge variant={doc.primary ? "default" : "outline"} className="text-[10px] font-bold uppercase">
                     {doc.type}
                   </Badge>
                 </div>
-                <h3 className="text-lg font-bold text-foreground mb-2">{doc.title}</h3>
+                <h3 className="font-heading text-lg font-bold text-foreground mb-2">{doc.title}</h3>
                 <p className="text-xs text-muted-foreground leading-relaxed mb-6">{doc.desc}</p>
               </div>
 
-              <div className="flex gap-2 pt-4 border-t border-border/60">
-                <Button asChild size="sm" className={`flex-1 rounded-xl font-semibold gap-2 ${doc.primary ? "bg-primary text-primary-foreground" : "bg-muted text-foreground hover:bg-muted/80"}`}>
+              <div className="flex gap-2 pt-4 border-t border-border/80">
+                <Button asChild size="sm" className={`flex-1 rounded-xl font-bold gap-2 ${doc.primary ? "btn-cta-glow text-white" : "bg-muted text-foreground hover:bg-muted/80"}`}>
                   <a href={doc.file} download>
                     <Download className="h-4 w-4" /> Download
                   </a>
                 </Button>
                 {doc.type === "PDF" && (
-                  <Button variant="outline" size="icon" asChild className="h-9 w-9 rounded-xl border-border">
+                  <Button variant="outline" size="icon" asChild className="h-9 w-9 rounded-xl border-border hover:bg-muted">
                     <a href={doc.file} target="_blank" rel="noreferrer" title="Open in new tab">
                       <ExternalLink className="h-4 w-4" />
                     </a>
@@ -103,9 +103,9 @@ export default function Documentation() {
         </div>
 
         {/* 6-Layers Pipeline Architecture (Table 2 in Report) */}
-        <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-sm space-y-6">
+        <div className="card-elevated p-6 sm:p-8 space-y-6">
           <div className="border-b border-border pb-4">
-            <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+            <h2 className="font-heading text-xl font-bold text-foreground flex items-center gap-2">
               <Layers className="h-5 w-5 text-primary" /> System Architecture: 6-Layers Pipeline (Table 2)
             </h2>
             <p className="text-xs text-muted-foreground mt-1">
@@ -115,14 +115,14 @@ export default function Documentation() {
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {pipelineLayers.map((l) => (
-              <div key={l.layer} className="p-5 rounded-2xl border border-border bg-background space-y-2">
+              <div key={l.layer} className="p-5 rounded-2xl border border-border/80 bg-card/60 backdrop-blur-sm space-y-2">
                 <div className="flex items-center justify-between">
                   <Badge className="bg-primary/10 text-primary border-primary/20 text-[11px] font-mono font-bold">
                     {l.layer}
                   </Badge>
                   <span className="text-[11px] font-mono text-muted-foreground">{l.module}</span>
                 </div>
-                <h3 className="font-bold text-sm text-foreground">{l.name}</h3>
+                <h3 className="font-heading font-bold text-sm text-foreground">{l.name}</h3>
                 <p className="text-xs text-muted-foreground leading-relaxed">{l.desc}</p>
               </div>
             ))}
@@ -130,15 +130,15 @@ export default function Documentation() {
         </div>
 
         {/* Embedded PDF Viewer Section */}
-        <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-sm space-y-4">
+        <div className="card-elevated p-6 sm:p-8 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-4">
             <div>
-              <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+              <h2 className="font-heading text-lg font-bold text-foreground flex items-center gap-2">
                 <FileText className="h-5 w-5 text-primary" /> Interactive Project Report Document
               </h2>
               <p className="text-xs text-muted-foreground">Direct inline preview of AIHealthGuard_Project_Report.pdf</p>
             </div>
-            <Button variant="outline" size="sm" asChild className="rounded-xl border-border font-semibold gap-2">
+            <Button variant="outline" size="sm" asChild className="rounded-xl border-border font-bold gap-2">
               <a href="/AIHealthGuard_Project_Report.pdf" target="_blank" rel="noreferrer">
                 <ExternalLink className="h-4 w-4" /> Open Full Screen
               </a>

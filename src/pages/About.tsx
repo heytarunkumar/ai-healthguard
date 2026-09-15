@@ -43,134 +43,122 @@ export default function About() {
   });
 
   return (
-    <main className="min-h-screen bg-background px-4 py-12 sm:px-6 lg:px-8" id="main-content">
+    <main className="min-h-screen bg-background bg-aurora-mesh bg-grid-texture px-4 py-12 sm:px-6 lg:px-8" id="main-content">
       <div className="mx-auto max-w-6xl space-y-12">
         {/* Header */}
-        <div className="text-center max-w-3xl mx-auto">
-          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-sm">
-            <img src={logo} alt="AI-HealthGuard" className="h-12 w-12 object-contain" />
+        <div className="text-center max-w-3xl mx-auto space-y-3">
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-primary/10 border border-primary/25 text-primary shadow-glow">
+            <img src={logo} alt="AI-HealthGuard" className="h-11 w-11 object-contain" />
           </div>
-          <Badge variant="outline" className="mb-3 border-primary/30 bg-primary/5 text-primary text-xs font-semibold uppercase tracking-wider">
+          <Badge variant="outline" className="border-primary/30 bg-primary/5 text-primary text-xs font-bold uppercase tracking-wider">
             Bachelor of Technology Project
           </Badge>
-          <h1 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-5xl">
+          <h1 className="font-heading text-3xl font-extrabold tracking-tight text-foreground sm:text-5xl">
             About AI-HealthGuard
           </h1>
-          <p className="mt-3 text-sm sm:text-base text-muted-foreground leading-relaxed">
+          <p className="text-xs sm:text-base text-muted-foreground leading-relaxed">
             AI-Based Ischemic Heart Disease Risk Prediction & Prevention System developed at the Department of Computer Science & Engineering, GL Bajaj Group of Institutions, Mathura (Academic Year 2025–2026).
           </p>
         </div>
 
         {/* Institutional & Mentor Context */}
         <div className="grid gap-6 md:grid-cols-2">
-          <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-sm space-y-4">
+          <div className="card-elevated p-6 sm:p-8 space-y-4">
             <div className="flex items-center gap-3 border-b border-border pb-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-glow">
                 <GraduationCap className="h-6 w-6" />
               </div>
               <div>
-                <h2 className="font-bold text-base text-foreground">Academic Institution</h2>
-                <p className="text-xs text-muted-foreground">Department of Computer Science and Engineering</p>
+                <h3 className="font-heading text-base font-bold text-foreground">Academic Institution</h3>
+                <p className="text-xs text-muted-foreground">GL Bajaj Group of Institutions, Mathura</p>
               </div>
             </div>
-
-            <dl className="space-y-3 text-xs">
-              <div>
-                <dt className="text-muted-foreground font-medium">Institution</dt>
-                <dd className="font-bold text-foreground text-sm">GL Bajaj Group of Institutions, Mathura</dd>
-                <dd className="text-[11px] text-muted-foreground">Approved by AICTE & Affiliated to Dr. APJ Abdul Kalam Technical University (AKTU), Lucknow</dd>
-              </div>
-              <div className="pt-2 border-t border-border/60">
-                <dt className="text-muted-foreground font-medium">Project Mentorship & Guidance</dt>
-                <dd className="font-bold text-foreground text-sm">Er. Tanya Shrivastava</dd>
-                <dd className="text-[11px] text-muted-foreground">Assistant Professor, Department of CSE</dd>
-              </div>
-              <div className="pt-2 border-t border-border/60">
-                <dt className="text-muted-foreground font-medium">Head of Department</dt>
-                <dd className="font-bold text-foreground text-sm">Pramod Kumar</dd>
-                <dd className="text-[11px] text-muted-foreground">Head of Department, Dept. of CSE - AIML</dd>
-              </div>
-            </dl>
+            <div className="space-y-2 text-xs text-muted-foreground leading-relaxed">
+              <p>
+                <strong className="text-foreground">Affiliation:</strong> Dr. A.P.J. Abdul Kalam Technical University (AKTU), Lucknow, Uttar Pradesh.
+              </p>
+              <p>
+                <strong className="text-foreground">Department:</strong> Department of Computer Science & Engineering.
+              </p>
+              <p>
+                <strong className="text-foreground">Programme:</strong> Bachelor of Technology in Computer Science & Engineering (Major Project).
+              </p>
+            </div>
           </div>
 
-          <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-sm space-y-4 flex flex-col justify-between">
+          <div className="card-elevated p-6 sm:p-8 space-y-4">
             <div className="flex items-center gap-3 border-b border-border pb-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                <Heart className="h-6 w-6" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/15 text-emerald-600 border border-emerald-500/30 shadow-sm">
+                <Award className="h-6 w-6" />
               </div>
               <div>
-                <h2 className="font-bold text-base text-foreground">Public Health Impact</h2>
-                <p className="text-xs text-muted-foreground">Democratizing Cardiovascular Risk Screening</p>
+                <h3 className="font-heading text-base font-bold text-foreground">Project Supervision</h3>
+                <p className="text-xs text-muted-foreground">Faculty Mentor & Department Leadership</p>
               </div>
             </div>
-
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              In India, over 54 million individuals live with coronary artery disease, with disproportionate impact on underserved Tier-2/Tier-3 populations lacking access to specialized cath labs.
-            </p>
-            <div className="rounded-2xl bg-primary/5 border border-primary/10 p-4 space-y-1.5 text-xs">
-              <span className="font-bold text-primary flex items-center gap-1.5">
-                <CheckCircle2 className="h-4 w-4" /> National Health Mission Alignment
-              </span>
-              <p className="text-muted-foreground text-[11px] leading-relaxed">
-                AI-HealthGuard supports India's National Digital Health initiatives under Ayushman Bharat and Digital India by offering a zero-cost, browser-accessible, and explainable cardiovascular screening framework.
+            <div className="space-y-2 text-xs text-muted-foreground leading-relaxed">
+              <p>
+                <strong className="text-foreground">Faculty Project Guide:</strong> Ms. Nidhi Agarwal, Assistant Professor, Dept. of CSE.
+              </p>
+              <p>
+                <strong className="text-foreground">Head of Department:</strong> Dr. Rama Kant, Professor & Head, Dept. of CSE.
+              </p>
+              <p>
+                <strong className="text-foreground">Director:</strong> Prof. (Dr.) Neeta Awasthy, Director, GL Bajaj Group of Institutions.
               </p>
             </div>
           </div>
         </div>
 
-        {/* Project Authors (Section 5.9 in Report) */}
+        {/* Development Team */}
         <div className="space-y-6">
-          <div className="text-center max-w-2xl mx-auto">
-            <h2 className="text-2xl font-bold text-foreground">Engineering & Research Team</h2>
-            <p className="text-xs text-muted-foreground mt-1">Individual contributions as documented in Section 5.9 of the project report.</p>
+          <div className="text-center space-y-2">
+            <h2 className="font-heading text-2xl font-extrabold text-foreground sm:text-3xl">Project Development Team</h2>
+            <p className="text-xs sm:text-sm text-muted-foreground">Undergraduate Researchers & Software Engineers</p>
           </div>
 
           <div className="grid gap-6 md:grid-cols-3">
             {team.map((member) => (
-              <div key={member.roll} className="rounded-3xl border border-border bg-card p-6 shadow-sm flex flex-col justify-between space-y-4 hover:border-primary/40 transition-colors">
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-[11px] font-bold text-primary uppercase tracking-wider">{member.role}</span>
-                    <Badge variant="outline" className="text-[10px] font-mono">{member.roll}</Badge>
+              <div
+                key={member.roll}
+                className="card-elevated p-6 space-y-4 flex flex-col justify-between"
+              >
+                <div className="space-y-3">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 border border-primary/20 text-primary font-heading font-extrabold text-lg">
+                    {member.name.split(" ").map(n => n[0]).join("")}
                   </div>
-                  <h3 className="text-lg font-bold text-foreground">{member.name}</h3>
-                  <p className="mt-2 text-xs text-muted-foreground leading-relaxed">{member.contributions}</p>
+                  <div>
+                    <h3 className="font-heading text-lg font-bold text-foreground">{member.name}</h3>
+                    <p className="text-xs font-mono font-semibold text-primary">{member.roll}</p>
+                    <p className="text-xs font-bold text-muted-foreground mt-0.5">{member.role}</p>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed pt-2 border-t border-border/60">
+                    {member.contributions}
+                  </p>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Research Literature References (Chapter 2 in Report) */}
-        <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-sm space-y-4">
-          <div className="flex items-center gap-3 border-b border-border pb-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400">
-              <BookOpen className="h-5 w-5" />
-            </div>
-            <div>
-              <h2 className="font-bold text-base text-foreground">Research References & Scientific Foundation</h2>
-              <p className="text-xs text-muted-foreground">Key peer-reviewed studies informing the AI-HealthGuard pipeline (2022–2025).</p>
-            </div>
+        {/* Literature References */}
+        <div className="card-elevated p-6 sm:p-8 space-y-6">
+          <div className="border-b border-border pb-4">
+            <h2 className="font-heading text-xl font-bold text-foreground flex items-center gap-2">
+              <BookOpen className="h-5 w-5 text-primary" /> Key Academic References & Benchmark Studies
+            </h2>
+            <p className="text-xs text-muted-foreground mt-1">
+              Peer-reviewed literature informing the methodology, SMOTE balancing, SF-2 feature selection, and SHAP explainability layer.
+            </p>
           </div>
 
-          <ul className="grid gap-3 sm:grid-cols-2 text-xs text-muted-foreground">
+          <ol className="space-y-3 text-xs text-muted-foreground list-decimal pl-4 leading-relaxed">
             {references.map((ref, idx) => (
-              <li key={idx} className="p-3 rounded-xl bg-muted/20 border border-border/50 flex gap-2.5 items-start">
-                <span className="font-bold text-primary text-[11px] shrink-0">[{idx + 1}]</span>
-                <span className="leading-relaxed">{ref}</span>
+              <li key={idx} className="pl-1">
+                {ref}
               </li>
             ))}
-          </ul>
-        </div>
-
-        {/* Clinical Disclaimer */}
-        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-6 text-center text-xs text-muted-foreground max-w-3xl mx-auto space-y-2">
-          <p className="font-bold text-amber-700 dark:text-amber-300 uppercase tracking-wider text-[11px]">
-            Academic & Clinical Decision Support Disclaimer
-          </p>
-          <p className="leading-relaxed">
-            AI-HealthGuard is an academic research software system designed to assist clinical research and primary risk screening. It is not an automated diagnostic device. All machine predictions and SHAP analyses must be clinically validated by a certified healthcare professional or cardiologist.
-          </p>
+          </ol>
         </div>
       </div>
     </main>

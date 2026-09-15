@@ -1,24 +1,59 @@
 import { useState } from "react";
 import { useSEO } from "@/hooks/useSEO";
 import { useNavigate } from "react-router-dom";
-import { Heart, Info, Sparkles, RotateCcw, ArrowRight, ShieldAlert, CheckCircle2, Stethoscope, Sliders } from "lucide-react";
+import {
+  Heart,
+  Info,
+  Sparkles,
+  RotateCcw,
+  ArrowRight,
+  ShieldAlert,
+  CheckCircle2,
+  Stethoscope,
+  Activity,
+  Sliders,
+  User,
+  Flame,
+  Zap,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+  TooltipProvider,
+} from "@/components/ui/tooltip";
 import { featureFields, samplePresets } from "@/lib/mockData";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 
 export default function RiskAssessment() {
   const [formData, setFormData] = useState<Record<string, string>>({
-    age: "52", sex: "1", cp: "3", trestbps: "140", chol: "268",
-    fbs: "0", restecg: "1", thalach: "134", exang: "1",
-    oldpeak: "2.4", slope: "1", ca: "2", thal: "3",
+    age: "52",
+    sex: "1",
+    cp: "3",
+    trestbps: "140",
+    chol: "268",
+    fbs: "0",
+    restecg: "1",
+    thalach: "134",
+    exang: "1",
+    oldpeak: "2.4",
+    slope: "1",
+    ca: "2",
+    thal: "3",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [sampleLoadedMsg, setSampleLoadedMsg] = useState<string>("A 52-year-old male test case has been filled in.");
+  const [activePreset, setActivePreset] = useState<string>("sample-high");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -33,13 +68,13 @@ export default function RiskAssessment() {
   };
 
   const handleLoadPreset = (presetId: string) => {
-    const preset = samplePresets.find(p => p.id === presetId);
+    const preset = samplePresets.find((p) => p.id === presetId);
     if (!preset) return;
     setFormData(preset.data);
     setErrors({});
-    setSampleLoadedMsg(`Loaded: ${preset.label}`);
+    setActivePreset(presetId);
     toast({
-      title: "Sample Data Loaded",
+      title: "Sample Profile Loaded",
       description: preset.label,
     });
   };
@@ -47,7 +82,7 @@ export default function RiskAssessment() {
   const clearForm = () => {
     setFormData({});
     setErrors({});
-    setSampleLoadedMsg("");
+    setActivePreset("");
     toast({ title: "Form Cleared", description: "All input fields have been reset." });
   };
 
@@ -93,44 +128,60 @@ export default function RiskAssessment() {
     navigate("/results", { state: { patientData: formData } });
   };
 
+  // 3 Clinical Categories for grouping the 13 biomarkers
+  const demographicFields = featureFields.filter((f) =>
+    ["age", "sex", "trestbps", "chol", "fbs"].includes(f.name)
+  );
+  const stressFields = featureFields.filter((f) =>
+    ["cp", "thalach", "exang", "oldpeak", "slope"].includes(f.name)
+  );
+  const biomarkerFields = featureFields.filter((f) =>
+    ["restecg", "ca", "thal"].includes(f.name)
+  );
+
   return (
-    <main className="min-h-screen bg-background px-4 py-12 sm:px-6 lg:px-8" id="main-content">
-      <div className="mx-auto max-w-4xl">
-        {/* Header matching Fig. 3 */}
-        <div className="mb-10 text-center">
+    <main className="min-h-screen bg-background bg-aurora-mesh bg-grid-texture px-4 py-12 sm:px-6 lg:px-8" id="main-content">
+      <div className="mx-auto max-w-5xl space-y-8">
+        {/* Header */}
+        <div className="text-center space-y-3 max-w-2xl mx-auto">
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-sm"
+            className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary border border-primary/20 shadow-glow"
           >
             <Heart className="h-7 w-7 text-primary fill-primary/10" />
           </motion.div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
+          <h1 className="font-heading text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
             IHD Risk Assessment
           </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Enter your clinical parameters below. Hover over <Info className="inline h-3.5 w-3.5 text-primary" /> icons for reference ranges.
+          <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+            Enter the patient's 13 clinical biomarkers to run real-time XGBoost inference, calculate localized SHAP attributions, and generate customized prevention recommendations.
           </p>
         </div>
 
-        {/* Preset & Action Bar (Fig. 3) */}
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm">
+        {/* Preset Sample Bar */}
+        <div className="card-elevated p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5 mr-1">
-              <Sparkles className="h-3.5 w-3.5 text-primary" /> Load Sample Data:
+            <span className="text-xs font-bold text-foreground flex items-center gap-1.5 mr-1">
+              <Sparkles className="h-3.5 w-3.5 text-primary" /> Quick Sample Cases:
             </span>
-            {samplePresets.map((preset) => (
-              <Button
-                key={preset.id}
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => handleLoadPreset(preset.id)}
-                className="h-8 rounded-lg text-xs font-medium border-border hover:border-primary/40 hover:bg-primary/5 transition-all"
-              >
-                {preset.id === "high_risk" ? "High Risk (52y M)" : preset.id === "healthy" ? "Healthy (38y F)" : "Moderate Risk (58y M)"}
-              </Button>
-            ))}
+            {samplePresets.map((preset) => {
+              const isSelected = activePreset === preset.id;
+              return (
+                <button
+                  key={preset.id}
+                  type="button"
+                  onClick={() => handleLoadPreset(preset.id)}
+                  className={`rounded-xl px-3 py-1.5 text-xs font-bold transition-all duration-200 border ${
+                    isSelected
+                      ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                      : "bg-muted/60 text-muted-foreground border-border hover:bg-muted hover:text-foreground"
+                  }`}
+                >
+                  {preset.label}
+                </button>
+              );
+            })}
           </div>
 
           <Button
@@ -138,115 +189,201 @@ export default function RiskAssessment() {
             variant="ghost"
             size="sm"
             onClick={clearForm}
-            className="h-8 rounded-lg text-xs text-muted-foreground hover:text-destructive gap-1.5"
+            className="text-xs font-semibold text-muted-foreground hover:text-destructive gap-1.5 h-8"
           >
-            <RotateCcw className="h-3.5 w-3.5" /> Clear
+            <RotateCcw className="h-3.5 w-3.5" /> Clear All
           </Button>
         </div>
 
-        {/* Form Container (Fig. 3) */}
-        <form onSubmit={handleSubmit} className="rounded-3xl border border-border bg-card p-6 sm:p-10 shadow-sm">
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {featureFields.map((field) => (
-              <div key={field.name} className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <Label htmlFor={field.name} className="text-xs font-semibold text-foreground">
-                      {field.label}
-                    </Label>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button type="button" className="text-muted-foreground hover:text-primary transition-colors">
-                            <Info className="h-3.5 w-3.5 cursor-help" />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent side="top" className="max-w-[260px] rounded-xl p-3 text-xs shadow-md">
-                          <p className="leading-relaxed">{field.tooltip}</p>
-                          {field.type === "number" && (
-                            <p className="mt-1.5 font-bold text-primary text-[10px]">
-                              Range: {field.min}–{field.max} {field.unit}
-                            </p>
-                          )}
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                  {field.unit && (
-                    <span className="text-[11px] font-medium text-muted-foreground">{field.unit}</span>
-                  )}
+        {/* Input Form */}
+        <form onSubmit={handleSubmit} className="space-y-8">
+          <TooltipProvider delayDuration={150}>
+            {/* Category 1: Demographics & Baseline Vitals */}
+            <div className="card-elevated p-6 sm:p-8 space-y-5">
+              <div className="flex items-center gap-3 border-b border-border pb-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-500/10 text-blue-500 border border-blue-500/20">
+                  <User className="h-4.5 w-4.5" />
                 </div>
-
-                {field.type === "number" ? (
-                  <div className="relative">
-                    <Input
-                      id={field.name}
-                      type="number"
-                      step={field.step || 1}
-                      placeholder={`${field.min || 0} ${field.unit || ""}`}
-                      value={formData[field.name] || ""}
-                      onChange={(e) => handleChange(field.name, e.target.value)}
-                      className={`h-11 rounded-xl border bg-background px-3.5 text-sm font-medium transition-all focus:ring-2 focus:ring-primary/20 ${
-                        errors[field.name] ? "border-destructive focus:border-destructive" : "border-input hover:border-primary/40 focus:border-primary"
-                      }`}
-                    />
-                  </div>
-                ) : (
-                  <Select
-                    value={formData[field.name] || ""}
-                    onValueChange={(v) => handleChange(field.name, v)}
-                  >
-                    <SelectTrigger
-                      id={field.name}
-                      className={`h-11 rounded-xl border bg-background px-3.5 text-sm font-medium transition-all ${
-                        errors[field.name] ? "border-destructive" : "border-input hover:border-primary/40 focus:border-primary"
-                      }`}
-                    >
-                      <SelectValue placeholder="Select..." />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl border shadow-lg">
-                      {field.options?.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value} className="text-xs font-medium py-2">
-                          {opt.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-
-                {errors[field.name] && (
-                  <p className="text-[11px] font-semibold text-destructive">{errors[field.name]}</p>
-                )}
+                <div>
+                  <h2 className="font-heading text-base font-bold text-foreground">
+                    1. Demographics & Baseline Vitals
+                  </h2>
+                  <p className="text-[11px] text-muted-foreground">
+                    Age, biological sex, resting blood pressure, cholesterol, and fasting blood sugar.
+                  </p>
+                </div>
               </div>
-            ))}
-          </div>
 
-          {/* Submit Button & Notification Banner (Fig. 3) */}
-          <div className="mt-10 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="text-xs text-muted-foreground">
-              {sampleLoadedMsg ? (
-                <span className="inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium bg-emerald-500/10 px-3 py-1.5 rounded-lg">
-                  <CheckCircle2 className="h-3.5 w-3.5" /> {sampleLoadedMsg}
-                </span>
-              ) : (
-                <span>All 13 parameters required for SF-2 model computation.</span>
-              )}
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {demographicFields.map((field) => (
+                  <InputField
+                    key={field.name}
+                    field={field}
+                    value={formData[field.name] || ""}
+                    error={errors[field.name]}
+                    onChange={(val) => handleChange(field.name, val)}
+                  />
+                ))}
+              </div>
             </div>
 
+            {/* Category 2: Cardiac Stress & Functional Testing */}
+            <div className="card-elevated p-6 sm:p-8 space-y-5">
+              <div className="flex items-center gap-3 border-b border-border pb-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                  <Flame className="h-4.5 w-4.5" />
+                </div>
+                <div>
+                  <h2 className="font-heading text-base font-bold text-foreground">
+                    2. Cardiac Stress & Functional Testing
+                  </h2>
+                  <p className="text-[11px] text-muted-foreground">
+                    Chest pain symptomatic classification, peak heart rate, exertional angina, ST depression & slope.
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {stressFields.map((field) => (
+                  <InputField
+                    key={field.name}
+                    field={field}
+                    value={formData[field.name] || ""}
+                    error={errors[field.name]}
+                    onChange={(val) => handleChange(field.name, val)}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Category 3: Diagnostic Biomarkers & Fluoroscopy */}
+            <div className="card-elevated p-6 sm:p-8 space-y-5">
+              <div className="flex items-center gap-3 border-b border-border pb-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-500/10 text-purple-500 border border-purple-500/20">
+                  <Activity className="h-4.5 w-4.5" />
+                </div>
+                <div>
+                  <h2 className="font-heading text-base font-bold text-foreground">
+                    3. Electrocardiography & Fluoroscopy
+                  </h2>
+                  <p className="text-[11px] text-muted-foreground">
+                    Resting ECG evaluation, fluoroscopy major vessel count, and thalassemia blood flow defect.
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {biomarkerFields.map((field) => (
+                  <InputField
+                    key={field.name}
+                    field={field}
+                    value={formData[field.name] || ""}
+                    error={errors[field.name]}
+                    onChange={(val) => handleChange(field.name, val)}
+                  />
+                ))}
+              </div>
+            </div>
+          </TooltipProvider>
+
+          {/* Submit Action Bar */}
+          <div className="card-elevated p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="text-xs text-muted-foreground text-center sm:text-left">
+              <strong className="text-foreground">Clinical Validation Notice:</strong> Inputs are evaluated against physiological ranges matching the UCI Cleveland Benchmark (SF-2 Subset).
+            </div>
             <Button
               type="submit"
               size="lg"
-              className="w-full sm:w-auto h-12 px-8 rounded-xl bg-primary text-primary-foreground font-bold shadow-md hover:bg-primary/90 transition-all hover:scale-[1.02] gap-2"
+              className="btn-cta-glow h-13 w-full sm:w-auto rounded-2xl px-8 font-bold text-sm gap-2 shadow-glow"
             >
-              <Heart className="h-4 w-4 fill-primary-foreground" /> Predict IHD Risk
+              <Sparkles className="h-4 w-4" /> Calculate Risk & SHAP Drivers <ArrowRight className="h-4 w-4" />
             </Button>
           </div>
         </form>
-
-        <p className="mt-8 text-center text-xs text-muted-foreground">
-          AI-HealthGuard inference executes via 5 machine learning models in under 3 seconds. For clinical screening and research support only.
-        </p>
       </div>
     </main>
+  );
+}
+
+// Subcomponent for responsive, accessible input cards with tooltips
+function InputField({
+  field,
+  value,
+  error,
+  onChange,
+}: {
+  field: any;
+  value: string;
+  error?: string;
+  onChange: (val: string) => void;
+}) {
+  return (
+    <div
+      className={`relative rounded-2xl border p-3.5 transition-all duration-200 bg-card/60 backdrop-blur-sm ${
+        error
+          ? "border-destructive/80 bg-destructive/5"
+          : "border-border/80 hover:border-primary/40 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20"
+      }`}
+    >
+      <div className="mb-1.5 flex items-center justify-between">
+        <Label
+          htmlFor={field.name}
+          className="text-xs font-bold text-foreground flex items-center gap-1 cursor-pointer"
+        >
+          {field.label}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button type="button" className="text-muted-foreground hover:text-primary transition-colors">
+                <Info className="h-3 w-3" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs text-xs p-2.5 rounded-xl">
+              <p className="font-bold text-primary mb-1">{field.label} ({field.name})</p>
+              <p>{field.tooltip || field.description || "Clinical biomarker reference value."}</p>
+              {field.unit && <p className="mt-1 text-[10px] text-muted-foreground">Unit: {field.unit}</p>}
+            </TooltipContent>
+          </Tooltip>
+        </Label>
+        {field.unit && (
+          <span className="text-[10px] font-mono font-semibold text-muted-foreground">
+            {field.unit}
+          </span>
+        )}
+      </div>
+
+      {field.type === "select" ? (
+        <Select value={value} onValueChange={onChange}>
+          <SelectTrigger
+            id={field.name}
+            className="h-10 rounded-xl bg-background/80 border-border text-xs font-semibold focus:ring-0"
+          >
+            <SelectValue placeholder="Select..." />
+          </SelectTrigger>
+          <SelectContent className="rounded-xl">
+            {field.options?.map((opt: any) => (
+              <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      ) : (
+        <Input
+          id={field.name}
+          type="number"
+          step="any"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={field.placeholder || `e.g. ${field.min ?? ""}`}
+          className="h-10 rounded-xl bg-background/80 border-border text-xs font-semibold font-mono focus-visible:ring-0"
+        />
+      )}
+
+      {error && (
+        <p className="mt-1 text-[10px] font-bold text-destructive animate-pulse">
+          {error}
+        </p>
+      )}
+    </div>
   );
 }
