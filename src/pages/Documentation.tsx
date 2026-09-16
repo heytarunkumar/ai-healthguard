@@ -1,49 +1,71 @@
-import { FileText, Download, ExternalLink, BookOpen, Cpu, Sparkles, Files, Info, Layers, CheckCircle2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Cpu, Sparkles, Layers, ShieldCheck, Activity, BrainCircuit, Database, LineChart, Stethoscope, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import { useSEO } from "@/hooks/useSEO";
 
 export default function Documentation() {
   useSEO({
-    title: "Project Documentation & 6-Layer Architecture | AI-HealthGuard",
-    description: "Access complete technical documentation, 6-layer pipeline specifications, and downloadable academic project reports for AI-HealthGuard.",
+    title: "System Architecture & 6-Layer Pipeline | AI-HealthGuard",
+    description: "Comprehensive technical documentation for AI-HealthGuard's 6-layer machine learning architecture, SHAP explainability framework, and clinical decision support pipeline.",
   });
 
-  const documents = [
+  const pipelineLayers = [
     {
-      title: "Project Final Report (PDF)",
-      desc: "Complete 54-page final year B.Tech major project report including literature review, CRISP-DM methodology, 6-layer pipeline, SHAP analysis, and Turnitin similarity index.",
-      file: "/AIHealthGuard_Project_Report.pdf",
-      type: "PDF",
-      icon: FileText,
-      primary: true,
+      layer: "L1",
+      name: "Data Ingestion Layer",
+      module: "data_loader.py",
+      desc: "Loads and version-controls the raw clinical dataset (303 records, 13 raw features) with rigorous schema validation and integrity checks.",
+      icon: Database,
     },
     {
-      title: "Product Requirements Document (PRD)",
-      desc: "Core functional specifications, user personas, clinical diagnostic scope, and acceptance criteria.",
-      file: "/AiHealth_Guard_PRD.docx",
-      type: "DOCX",
-      icon: BookOpen,
-      primary: false,
+      layer: "L2",
+      name: "Preprocessing & Balancing Layer",
+      module: "preprocessor.py",
+      desc: "Performs median/mode imputation, one-hot encoding, SF-2 top-10 feature selection, standard scaling, and SMOTE oversampling to eliminate class imbalance.",
+      icon: Sparkles,
     },
     {
-      title: "Google Colab ML Pipeline",
-      desc: "Sequential 7-cell reproducible pipeline (SMOTE class balancing, SF-2 feature selection, GridSearchCV tuning, SHAP explainers).",
-      file: "/AiHealth_Guard_Colab_Pipeline.ipynb",
-      type: "IPYNB",
+      layer: "L3",
+      name: "Model Training & Tuning Layer",
+      module: "model_trainer.py, evaluator.py",
+      desc: "Trains, cross-validates (10-Fold Repeated CV), tunes hyperparameters via GridSearchCV, and serializes 5 predictive models (XGBoost, RF, LR, SVM, NN).",
+      icon: BrainCircuit,
+    },
+    {
+      layer: "L4",
+      name: "Real-Time Inference Layer",
+      module: "inference_engine.py / Fast Engine",
+      desc: "Deserializes pre-trained artifacts, transforms live clinical inputs, computes risk probabilities, and delivers predictions in sub-second response times.",
       icon: Cpu,
-      primary: false,
+    },
+    {
+      layer: "L5",
+      name: "Explainability & Attribution Layer",
+      module: "explainer.py / SHAP",
+      desc: "Computes localized and global Shapley values using TreeExplainer and KernelExplainer across force plots, waterfall charts, and summary distributions.",
+      icon: LineChart,
+    },
+    {
+      layer: "L6",
+      name: "Clinical Presentation Layer",
+      module: "UI Dashboards & Prevention Engine",
+      desc: "Powers the interactive risk gauge, 4-tier personalized cardiovascular prevention roadmap, and clinical risk summary PDF exports.",
+      icon: Stethoscope,
     },
   ];
 
-  const pipelineLayers = [
-    { layer: "L1", name: "Data Layer", module: "data_loader.py", desc: "Loads and version-controls the raw UCI Cleveland CSV dataset (303 samples, 13 features)." },
-    { layer: "L2", name: "Preprocessing Layer", module: "preprocessor.py", desc: "Imputation (median/mode), target binarization, one-hot encoding, SF-2 top-10 feature selection, and SMOTE oversampling." },
-    { layer: "L3", name: "Model Training Layer", module: "model_trainer.py, evaluator.py", desc: "Trains, tunes (GridSearchCV), evaluates, and serializes all 5 ML models (XGB ★, RF, LR, SVM, NN)." },
-    { layer: "L4", name: "Inference Layer", module: "inference_engine.py / API", desc: "Loads serialized model artifacts (.pkl, .keras), preprocesses incoming clinical inputs, and returns risk probabilities in <3s." },
-    { layer: "L5", name: "Explainability Layer", module: "explainer.py", desc: "Computes localized and global SHAP values using TreeExplainer and KernelExplainer across all 4 visualization formats." },
-    { layer: "L6", name: "Presentation Layer", module: "app.py / React, recommender.py, risk_scorer.py", desc: "Interactive UI dashboards, circular risk gauge, 4-tier prevention engine, and clinical PDF report generation." },
+  const keyFeatures = [
+    { key: "cp", name: "Chest Pain Type", clinical: "Typical angina, atypical angina, non-anginal pain, asymptomatic", weight: "High (+SHAP impact)" },
+    { key: "thalach", name: "Max Heart Rate", clinical: "Maximum heart rate achieved during exercise stress test (bpm)", weight: "High (Protective when high)" },
+    { key: "oldpeak", name: "ST Depression", clinical: "ST depression induced by exercise relative to rest (mm)", weight: "High (Key ischemic biomarker)" },
+    { key: "ca", name: "Major Vessels", clinical: "Number of major vessels (0-3) colored by fluoroscopy", weight: "High (Anatomical biomarker)" },
+    { key: "thal", name: "Thallium Stress", clinical: "Normal, fixed defect, or reversible defect on myocardial perfusion scan", weight: "High (Perfusion marker)" },
+    { key: "age", name: "Patient Age", clinical: "Chronological age in years (range 29–77 in benchmark cohort)", weight: "Moderate" },
+    { key: "sex", name: "Biological Sex", clinical: "Male (1) or Female (0)", weight: "Moderate" },
+    { key: "trestbps", name: "Resting Blood Pressure", clinical: "Resting blood pressure on hospital admission (mm Hg)", weight: "Moderate" },
+    { key: "chol", name: "Serum Cholesterol", clinical: "Serum cholesterol concentration in mg/dl", weight: "Moderate" },
+    { key: "exang", name: "Exercise Induced Angina", clinical: "Presence of angina pectoris during physical exertion (1 = Yes, 0 = No)", weight: "Moderate" },
   ];
 
   return (
@@ -52,105 +74,128 @@ export default function Documentation() {
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto space-y-3">
           <Badge variant="outline" className="border-primary/30 bg-primary/5 text-primary text-xs font-bold uppercase tracking-wider">
-            Technical Specification & Archive
+            Technical Architecture & Specifications
           </Badge>
           <h1 className="font-heading text-3xl font-extrabold tracking-tight text-foreground sm:text-5xl">
-            Project Documentation
+            System Documentation
           </h1>
           <p className="text-xs sm:text-base text-muted-foreground leading-relaxed">
-            Architectural specifications, ML pipeline reproduction guidelines, and official B.Tech project artifacts for AI-HealthGuard.
+            In-depth architectural specifications, 6-layer machine learning pipeline design, and SHAP explainability methodology powering AI-HealthGuard.
           </p>
         </div>
 
-        {/* Downloadable Documents */}
-        <div className="grid gap-6 md:grid-cols-3">
-          {documents.map((doc) => (
-            <div
-              key={doc.title}
-              className={`card-elevated p-6 flex flex-col justify-between ${
-                doc.primary ? "border-primary/40 bg-gradient-to-b from-primary/10 via-card to-card" : ""
-              }`}
-            >
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`flex h-12 w-12 items-center justify-center rounded-2xl border ${doc.primary ? "bg-primary text-primary-foreground border-primary/30 shadow-glow" : "bg-muted text-foreground border-border"}`}>
-                    <doc.icon className="h-6 w-6" />
-                  </div>
-                  <Badge variant={doc.primary ? "default" : "outline"} className="text-[10px] font-bold uppercase">
-                    {doc.type}
-                  </Badge>
-                </div>
-                <h3 className="font-heading text-lg font-bold text-foreground mb-2">{doc.title}</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed mb-6">{doc.desc}</p>
-              </div>
-
-              <div className="flex gap-2 pt-4 border-t border-border/80">
-                <Button asChild size="sm" className={`flex-1 rounded-xl font-bold gap-2 ${doc.primary ? "btn-cta-glow text-white" : "bg-muted text-foreground hover:bg-muted/80"}`}>
-                  <a href={doc.file} download>
-                    <Download className="h-4 w-4" /> Download
-                  </a>
-                </Button>
-                {doc.type === "PDF" && (
-                  <Button variant="outline" size="icon" asChild className="h-9 w-9 rounded-xl border-border hover:bg-muted">
-                    <a href={doc.file} target="_blank" rel="noreferrer" title="Open in new tab">
-                      <ExternalLink className="h-4 w-4" />
-                    </a>
-                  </Button>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* 6-Layers Pipeline Architecture (Table 2 in Report) */}
+        {/* 6-Layers Pipeline Architecture */}
         <div className="card-elevated p-6 sm:p-8 space-y-6">
-          <div className="border-b border-border pb-4">
-            <h2 className="font-heading text-xl font-bold text-foreground flex items-center gap-2">
-              <Layers className="h-5 w-5 text-primary" /> System Architecture: 6-Layers Pipeline (Table 2)
-            </h2>
-            <p className="text-xs text-muted-foreground mt-1">
-              Modular pipeline design operating in offline training mode (L1–L3) and online inference mode (L4–L6).
-            </p>
+          <div className="border-b border-border pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h2 className="font-heading text-xl font-bold text-foreground flex items-center gap-2">
+                <Layers className="h-5 w-5 text-primary" /> 6-Layer Modular ML Pipeline Architecture
+              </h2>
+              <p className="text-xs text-muted-foreground mt-1">
+                Separation of offline data engineering & model training (L1–L3) from online sub-second clinical inference & explainability (L4–L6).
+              </p>
+            </div>
+            <Badge className="bg-primary/10 text-primary border-primary/20 text-xs font-mono font-bold w-fit">
+              Architecture v2.0
+            </Badge>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {pipelineLayers.map((l) => (
-              <div key={l.layer} className="p-5 rounded-2xl border border-border/80 bg-card/60 backdrop-blur-sm space-y-2">
+              <div key={l.layer} className="p-5 rounded-2xl border border-border/80 bg-card/60 backdrop-blur-sm space-y-3 hover:border-primary/40 transition-colors">
                 <div className="flex items-center justify-between">
-                  <Badge className="bg-primary/10 text-primary border-primary/20 text-[11px] font-mono font-bold">
-                    {l.layer}
-                  </Badge>
-                  <span className="text-[11px] font-mono text-muted-foreground">{l.module}</span>
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20">
+                      <l.icon className="h-4 w-4" />
+                    </div>
+                    <Badge className="bg-primary/15 text-primary border-primary/25 text-[11px] font-mono font-bold">
+                      {l.layer}
+                    </Badge>
+                  </div>
+                  <span className="text-[10px] font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded-md">{l.module}</span>
                 </div>
-                <h3 className="font-heading font-bold text-sm text-foreground">{l.name}</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">{l.desc}</p>
+                <div>
+                  <h3 className="font-heading font-bold text-sm text-foreground">{l.name}</h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed mt-1">{l.desc}</p>
+                </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Embedded PDF Viewer Section */}
-        <div className="card-elevated p-6 sm:p-8 space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-4">
-            <div>
-              <h2 className="font-heading text-lg font-bold text-foreground flex items-center gap-2">
-                <FileText className="h-5 w-5 text-primary" /> Interactive Project Report Document
-              </h2>
-              <p className="text-xs text-muted-foreground">Direct inline preview of AIHealthGuard_Project_Report.pdf</p>
-            </div>
-            <Button variant="outline" size="sm" asChild className="rounded-xl border-border font-bold gap-2">
-              <a href="/AIHealthGuard_Project_Report.pdf" target="_blank" rel="noreferrer">
-                <ExternalLink className="h-4 w-4" /> Open Full Screen
-              </a>
-            </Button>
+        {/* Selected Clinical Biomarkers */}
+        <div className="card-elevated p-6 sm:p-8 space-y-6">
+          <div className="border-b border-border pb-4">
+            <h2 className="font-heading text-xl font-bold text-foreground flex items-center gap-2">
+              <Activity className="h-5 w-5 text-emerald-500" /> Clinical Biomarkers & Feature Schema (SF-2 Subset)
+            </h2>
+            <p className="text-xs text-muted-foreground mt-1">
+              Top 10 selected predictive features optimized for maximal diagnostic accuracy and minimal clinical collection burden.
+            </p>
           </div>
 
-          <div className="aspect-[16/10] w-full rounded-2xl overflow-hidden border border-border bg-muted/20">
-            <iframe
-              src="/AIHealthGuard_Project_Report.pdf#toolbar=1"
-              className="h-full w-full border-0"
-              title="AI-HealthGuard Project Report PDF"
-            />
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-2">
+            {keyFeatures.map((f) => (
+              <div key={f.key} className="p-4 rounded-xl border border-border/70 bg-card/40 flex items-start justify-between gap-3">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono font-bold text-xs text-primary">{f.key}</span>
+                    <span className="font-heading font-bold text-xs text-foreground">• {f.name}</span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">{f.clinical}</p>
+                </div>
+                <Badge variant="outline" className="text-[10px] whitespace-nowrap shrink-0 border-border">
+                  {f.weight}
+                </Badge>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Explainability Framework Card */}
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="card-elevated p-6 sm:p-8 space-y-4">
+            <div className="flex items-center gap-3 border-b border-border pb-4">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+                <LineChart className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-heading text-base font-bold text-foreground">SHAP (SHapley Additive exPlanations)</h3>
+                <p className="text-xs text-muted-foreground">Game-Theoretic Feature Attribution</p>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              AI-HealthGuard integrates TreeExplainer to guarantee exact local feature attribution according to classical Shapley values. Each clinical biomarker is assigned an additive attribution value quantifying whether it pushed the patient towards higher or lower Ischemic Heart Disease risk relative to the baseline population expectation.
+            </p>
+            <div className="pt-2 flex items-center gap-2">
+              <Button asChild size="sm" variant="outline" className="rounded-xl font-bold text-xs">
+                <Link to="/models">
+                  View Model Benchmarks <ArrowRight className="ml-1 h-3.5 w-3.5" />
+                </Link>
+              </Button>
+            </div>
+          </div>
+
+          <div className="card-elevated p-6 sm:p-8 space-y-4">
+            <div className="flex items-center gap-3 border-b border-border pb-4">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                <ShieldCheck className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-heading text-base font-bold text-foreground">4-Tier Prevention Guidance Engine</h3>
+                <p className="text-xs text-muted-foreground">Personalized Actionable Strategies</p>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              The recommendation engine dynamically analyzes patient-specific SHAP drivers and maps them into four distinct lifestyle and clinical domains: Dietary Modifications, Physical Activity Protocols, Medical & Pharmacological Follow-ups, and Stress & Sleep Optimization.
+            </p>
+            <div className="pt-2 flex items-center gap-2">
+              <Button asChild size="sm" className="rounded-xl font-bold text-xs btn-cta-glow text-white">
+                <Link to="/assess">
+                  Launch Risk Assessment <ArrowRight className="ml-1 h-3.5 w-3.5" />
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
       </div>

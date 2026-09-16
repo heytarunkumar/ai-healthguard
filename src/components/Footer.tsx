@@ -21,8 +21,8 @@ export function Footer() {
               Explainable Multimodal AI Clinical Decision Support System for Ischemic Heart Disease (IHD) risk stratification, SHAP biomarker attribution, and personalized cardiovascular prevention.
             </p>
             <div className="flex items-center gap-2 text-[11px] font-semibold text-muted-foreground">
-              <GraduationCap className="h-4 w-4 text-primary" />
-              <span>GL Bajaj Group of Institutions, Mathura</span>
+              <ShieldCheck className="h-4 w-4 text-primary" />
+              <span>Evidence-Based Machine Learning Architecture</span>
             </div>
           </div>
 
@@ -49,7 +49,7 @@ export function Footer() {
               </li>
               <li>
                 <Link to="/about" className="hover:text-primary transition-colors flex items-center gap-1.5">
-                  <GraduationCap className="h-3.5 w-3.5 text-amber-500" /> Research Team & Mentors
+                  <GraduationCap className="h-3.5 w-3.5 text-amber-500" /> About & Mentorship
                 </Link>
               </li>
             </ul>
@@ -69,30 +69,30 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Col 4: Academic Compliance & Disclaimers */}
+          {/* Col 4: Clinical Safety & Disclaimers */}
           <div className="space-y-3">
             <h4 className="font-heading text-xs font-bold uppercase tracking-wider text-foreground">
-              Academic Disclaimer
+              Clinical Safety Notice
             </h4>
             <p className="text-[11px] text-muted-foreground leading-relaxed bg-muted/30 p-3 rounded-2xl border border-border/60">
-              AI-HealthGuard is an academic clinical decision support research tool. Predictions and risk scores are intended for research and screening guidance; consult a certified cardiologist for diagnostic evaluations.
+              AI-HealthGuard is an AI-powered clinical decision support research tool. Predictions and risk scores are intended for research, screening guidance, and educational purposes; consult a certified cardiologist for diagnostic evaluations.
             </p>
           </div>
         </div>
 
         <div className="mt-8 pt-6 border-t border-border/60 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
-          <p>© {new Date().getFullYear()} AI-HealthGuard. Dept. of Computer Science & Engineering, GL Bajaj Group of Institutions.</p>
+          <p>© {new Date().getFullYear()} AI-HealthGuard. Developed by Tarun Kumar.</p>
           <div className="flex items-center gap-4 text-xs">
-            <a href="/AIHealthGuard_Project_Report.pdf" target="_blank" rel="noreferrer" className="hover:text-primary transition-colors">
-              Project Report PDF
-            </a>
-            <span>•</span>
             <Link to="/documentation" className="hover:text-primary transition-colors">
               Documentation
             </Link>
             <span>•</span>
             <Link to="/about" className="hover:text-primary transition-colors">
-              Team
+              About & Mentorship
+            </Link>
+            <span>•</span>
+            <Link to="/models" className="hover:text-primary transition-colors">
+              Benchmarks
             </Link>
           </div>
         </div>

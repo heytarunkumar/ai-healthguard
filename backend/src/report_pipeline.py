@@ -1,8 +1,7 @@
 """
-AI-HealthGuard Report-Aligned Data Preprocessing and Feature Selection Pipeline
+AI-HealthGuard Clinical Data Preprocessing and Feature Selection Pipeline
 ================================================================================
-Implements the exact 6-stage clinical preprocessing pipeline specified in Section 3.3
-of the AI-HealthGuard Project Report (AIHealthGuard_Project_Report.pdf):
+Implements the exact 6-stage clinical preprocessing pipeline:
 
 Stage 1: Missing Value Imputation (Median for continuous, Mode for categorical)
 Stage 2: Categorical Feature Encoding (One-Hot Encoding with drop='first')

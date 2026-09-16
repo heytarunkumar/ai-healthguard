@@ -372,7 +372,7 @@ Disclaimer: Clinical decision support research tool. Consult a certified cardiol
 
       doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
-      doc.text("GL Bajaj Group of Institutions, Mathura | Dept. of Computer Science & Engineering", 14, 21);
+      doc.text("AI-HealthGuard | Clinical Decision Support System", 14, 21);
       doc.text(`Session ID: ${sessionId} | Date: ${new Date().toLocaleDateString()}`, 14, 27);
 
       // Risk Score Box
@@ -462,10 +462,10 @@ Disclaimer: Clinical decision support research tool. Consult a certified cardiol
         y += 2;
       });
 
-      // Academic & Clinical Footer
+      // Clinical Footer
       doc.setFontSize(7);
       doc.setTextColor(148, 163, 184);
-      doc.text("Disclaimer: AI-HealthGuard is an AI-powered clinical decision support research tool developed at GL Bajaj Group of Institutions.", 14, 285);
+      doc.text("Disclaimer: AI-HealthGuard is an AI-powered clinical decision support research tool.", 14, 285);
       doc.text("Predictions and SHAP values are for risk screening assistance; consult a licensed cardiologist for medical diagnoses.", 14, 289);
 
       doc.save(`AIHealthGuard_Report_${sessionId}.pdf`);
