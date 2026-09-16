@@ -100,6 +100,41 @@ function getShapExplanation(feature: string, value: number, isRisk: boolean): { 
           : `Optimal resting blood pressure (${value} mmHg) minimizes endothelial wall stress.`,
         action: "Adopt a low-sodium DASH diet and track resting BP daily.",
       };
+    case "sex":
+      return {
+        explanation: Number(value) === 1
+          ? "Male biological sex presents a statistically higher baseline incidence of ischemic heart disease in the training cohort."
+          : "Female biological sex provides demographic protective factors against early-onset coronary atherosclerosis.",
+        action: "Focus on aggressively managing modifiable risk factors (lipids, BP, and physical activity).",
+      };
+    case "exang":
+      return {
+        explanation: isRisk
+          ? "Presence of exercise-induced angina indicates that myocardial oxygen demand exceeds coronary blood supply during exertion."
+          : "Absence of exercise-induced angina indicates adequate coronary perfusion under exertion.",
+        action: "Consult your physician before engaging in high-intensity unmonitored cardiovascular workouts.",
+      };
+    case "fbs":
+      return {
+        explanation: isRisk
+          ? "Fasting blood sugar > 120 mg/dL serves as an indicator of insulin resistance or diabetic microvascular stress."
+          : "Normal fasting blood sugar (≤ 120 mg/dL) indicates optimal glycemic control and reduced endothelial strain.",
+        action: "Monitor HbA1c and maintain a low-glycemic, whole-food diet.",
+      };
+    case "restecg":
+      return {
+        explanation: isRisk
+          ? "Resting ECG abnormality (ST-T wave change or LVH) signals underlying electrical conduction strain or myocardial hypertrophy."
+          : "Normal resting 12-lead ECG indicates healthy baseline myocardial electrical conduction.",
+        action: "Obtain a formal resting 12-lead ECG and echocardiogram consultation.",
+      };
+    case "slope":
+      return {
+        explanation: isRisk
+          ? "Flat or downsloping peak exercise ST segment correlates with ischemic repolarization delay."
+          : "Upsloping ST segment during peak exercise is a healthy physiological response to cardiac workload.",
+        action: "Correlate findings with exercise stress testing supervised by a cardiologist.",
+      };
     case "age":
       return {
         explanation: isRisk
