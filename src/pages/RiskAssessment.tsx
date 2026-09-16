@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSEO } from "@/hooks/useSEO";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   Heart,
   Info,
@@ -109,27 +109,33 @@ const STAGES = [
 ];
 
 export default function RiskAssessment() {
-  const [currentStage, setCurrentStage] = useState<number>(1);
-  const [formData, setFormData] = useState<Record<string, string>>({
-    age: "52",
-    sex: "1",
-    cp: "3",
-    trestbps: "140",
-    chol: "268",
-    fbs: "0",
-    restecg: "1",
-    thalach: "134",
-    exang: "1",
-    oldpeak: "2.4",
-    slope: "1",
-    ca: "2",
-    thal: "3",
-  });
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [activePreset, setActivePreset] = useState<string>("high_risk");
-  const [openWhy, setOpenWhy] = useState<Record<string, boolean>>({});
+  const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const stateData = (location.state?.formData || location.state?.patientData) as Record<string, string> | undefined;
+
+  const [currentStage, setCurrentStage] = useState<number>(1);
+  const [formData, setFormData] = useState<Record<string, string>>(
+    stateData || {
+      age: "52",
+      sex: "1",
+      cp: "3",
+      trestbps: "140",
+      chol: "268",
+      fbs: "0",
+      restecg: "1",
+      thalach: "134",
+      exang: "1",
+      oldpeak: "2.4",
+      slope: "1",
+      ca: "2",
+      thal: "3",
+    }
+  );
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [activePreset, setActivePreset] = useState<string>(stateData ? "" : "high_risk");
+  const [openWhy, setOpenWhy] = useState<Record<string, boolean>>({});
 
   useSEO({
     title: "Conversational Assessment Wizard | AI-HealthGuard",
@@ -363,9 +369,25 @@ export default function RiskAssessment() {
                   key={s.id}
                   type="button"
                   onClick={() => {
-                    // Allow clicking past completed steps
-                    if (s.id <= currentStage || validateStage(currentStage)) {
+                    if (s.id < currentStage) {
                       setCurrentStage(s.id);
+                    } else if (s.id > currentStage) {
+                      let canAdvance = true;
+                      for (let st = 1; st < s.id; st++) {
+                        if (!validateStage(st)) {
+                          canAdvance = false;
+                          setCurrentStage(st);
+                          toast({
+                            title: `Incomplete Stage ${st}`,
+                            description: "Please complete required biomarkers before advancing.",
+                            variant: "destructive",
+                          });
+                          break;
+                        }
+                      }
+                      if (canAdvance) {
+                        setCurrentStage(s.id);
+                      }
                     }
                   }}
                   className={`h-2.5 rounded-full transition-all duration-300 ${

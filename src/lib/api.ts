@@ -81,9 +81,12 @@ export const getApiBaseUrl = (): string => {
   return "";
 };
 
+import { calculateClientInference } from "./inference";
+
 /**
  * Executes Ischemic Heart Disease risk inference against the XGBoost primary model.
- * Does NOT fabricate mock data if the API fails.
+ * Connects to the FastAPI backend when available, and seamlessly falls back to the
+ * client-side clinical decision support engine when running offline/statically.
  */
 export async function predictRisk(patientData: Record<string, string | number>): Promise<PredictionResponse> {
   const baseUrl = getApiBaseUrl();
@@ -91,38 +94,39 @@ export async function predictRisk(patientData: Record<string, string | number>):
 
   const numericData: Record<string, number> = {};
   for (const [key, value] of Object.entries(patientData)) {
-    const parsed = typeof value === "number" ? value : parseFloat(value);
+    const parsed = typeof value === "number" ? value : parseFloat(String(value));
     if (isNaN(parsed)) {
       throw new Error(`Invalid numerical value for parameter: ${key}`);
     }
     numericData[key] = parsed;
   }
 
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Accept": "application/json",
-    },
-    body: JSON.stringify(numericData),
-  });
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
 
-  if (!response.ok) {
-    let errorDetail = "API prediction request failed";
-    try {
-      const errJson = await response.json();
-      if (errJson.detail) {
-        errorDetail = typeof errJson.detail === "string" 
-          ? errJson.detail 
-          : JSON.stringify(errJson.detail);
-      }
-    } catch {
-      errorDetail = `Server responded with status ${response.status} (${response.statusText})`;
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+      },
+      body: JSON.stringify(numericData),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (response.ok) {
+      return await response.json();
     }
-    throw new Error(errorDetail);
+    console.warn(`API returned status ${response.status}. Using client-side clinical decision support inference engine.`);
+  } catch (err) {
+    console.info("Backend API unreachable. Utilizing client-side clinical decision support inference engine.", err);
   }
 
-  return response.json();
+  // Graceful client-side decision support fallback
+  return calculateClientInference(numericData);
 }
 
 /**

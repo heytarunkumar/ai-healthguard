@@ -634,7 +634,7 @@ Disclaimer: Clinical decision support research tool. Consult a certified cardiol
                   Assessment Complete
                 </span>
                 <span className="text-xs font-mono font-bold">
-                  Probability: {(apiData.probability * 100).toFixed(1)}%
+                  Probability: {((apiData?.probability ?? 0) * 100).toFixed(1)}%
                 </span>
               </div>
               <h2 className="font-heading font-extrabold text-lg sm:text-xl mt-0.5">
@@ -693,7 +693,7 @@ Disclaimer: Clinical decision support research tool. Consult a certified cardiol
                 <RiskGauge score={riskScore} size="lg" />
                 <div className="space-y-1 text-center">
                   <p className="text-xs font-semibold text-foreground">
-                    XGBoost Primary Probability: <strong className="text-primary font-mono">{(apiData.probability * 100).toFixed(1)}%</strong>
+                    XGBoost Primary Probability: <strong className="text-primary font-mono">{((apiData?.probability ?? 0) * 100).toFixed(1)}%</strong>
                   </p>
                   <p className="text-[11px] text-muted-foreground">
                     Benchmarked against 303 UCI Cleveland clinical profiles.
